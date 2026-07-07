@@ -11,7 +11,7 @@ config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = true
 config.tab_bar_at_bottom = true
 
-config.default_prog = { 'wsl.exe', '~' }
+config.default_prog = { 'wsl.exe', '--', 'bash', '-lic', 'tmux new-session -A -s main' }
 
 -- Font
 config.font = wezterm.font('JetBrains Mono', { weight = 'Regular' })
