@@ -3,8 +3,8 @@ local config = wezterm.config_builder()
 
 -- Window
 config.window_decorations = "TITLE|RESIZE"
-config.window_background_opacity = 0.9
 config.win32_system_backdrop = 'Acrylic'  -- blurs whatever is behind the window (Windows)
+config.window_background_opacity = 0.7     -- keep < ~0.85 or the tint hides the acrylic blur
 -- config.window_padding = { left = 12, right = 12, top = 12, bottom = 12 }
 
 -- Tab bar
