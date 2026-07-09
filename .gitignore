@@ -1,0 +1,11 @@
+# Backups created by install.sh
+*.bak
+
+# Never commit secrets or machine-local Claude state
+claude/.credentials.json
+claude/projects/
+claude/history.jsonl
+
+# OS junk
+.DS_Store
+Thumbs.db
