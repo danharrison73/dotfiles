@@ -8,9 +8,11 @@ My personal configuration for a WSL2 (Ubuntu) + WezTerm setup on Windows.
 | --- | --- | --- | --- |
 | **zsh** | `zsh/.zshrc` | `~/.zshrc` | Login shell. History, prompt, completion, conda, nvm, fzf. |
 | **bash** | `bash/.bashrc` | `~/.bashrc` | Kept as a fallback shell. |
-| **nvim** | `nvim/init.lua` | `~/.config/nvim/init.lua` | lazy.nvim plugin manager, harpoon + telescope. |
+| **git** | `git/.gitconfig`, `git/.gitignore_global` | `~/.gitconfig`, `~/.gitignore_global` | Identity, aliases, and a global ignore list. |
+| **nvim** | `nvim/init.lua`, `nvim/lazy-lock.json` | `~/.config/nvim/` | lazy.nvim plugin manager (version-pinned), harpoon + telescope. |
 | **tmux** | `tmux/.tmux.conf` | `~/.tmux.conf` | `C-Space` prefix, vim-style panes, Tokyo Night status bar. |
 | **wezterm** | `wezterm/.wezterm.lua` | Windows `~/.wezterm.lua` (stub) | Terminal emulator. Launches WSL into a tmux session. |
+| **claude** | `claude/settings.json`, `claude/statusline-command.sh` | `~/.claude/` | Claude Code global settings + custom status line. |
 
 ## Configs
 
@@ -23,8 +25,12 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - conda (via the `shell.zsh` hook), ssh-agent bootstrap, nvm, and fzf.
 - Extra aliases can be dropped in `~/.zsh_aliases`.
 
-### nvim (`nvim/init.lua`)
-- **lazy.nvim** self-bootstraps on first launch.
+### git (`git/`)
+- `.gitconfig` — identity, `main` as the default branch, `vim` editor, and aliases (`st`, `co`, `br`, `ci`, `lg`, `last`, `unstage`).
+- `.gitignore_global` — OS/editor junk ignored across every repo (wired up via `core.excludesfile`).
+
+### nvim (`nvim/`)
+- **lazy.nvim** self-bootstraps on first launch; `lazy-lock.json` pins plugin versions so every machine installs the same commits.
 - **harpoon** — `<leader>a` add, `<leader>h` menu, `<leader>1..4` jump.
 - **telescope** — `<leader>ff` files, `<leader>fg` grep, `<leader>fb` buffers, `<leader>fh` help.
 - Leader is `<Space>`; `jk` escapes insert mode; 2-space indentation, line numbers, no swapfile.
@@ -42,6 +48,11 @@ The primary interactive shell. Ported from the old `.bashrc`:
   tiny Windows-side stub that live-loads this file over the `\\wsl.localhost` path
   (edits hot-reload; no re-copy needed).
 
+### claude (`claude/`)
+Global [Claude Code](https://claude.com/claude-code) config:
+- `settings.json` — model, notification/stop sound hooks (Windows), enabled plugins, and the status line command.
+- `statusline-command.sh` — custom status line showing model, effort, context %, cost, rate limits, and git state (needs `jq`).
+
 ## Tools I use
 - [tmux](https://github.com/tmux/tmux)
 - [wezterm](https://wezfurlong.org/wezterm/)
@@ -50,6 +61,7 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - [ripgrep](https://github.com/BurntSushi/ripgrep)
 - [fzf](https://github.com/junegunn/fzf)
 - [fd](https://github.com/sharkdp/fd)
+- [jq](https://jqlang.github.io/jq/) (used by the Claude status line)
 
 ### On the wishlist
 - [starship](https://starship.rs/) prompt
@@ -62,5 +74,10 @@ cd ~/dotfiles
 ./install.sh
 ```
 
-`install.sh` symlinks each config into place, backing up any existing file to
-`*.bak` first. Then reload with `exec zsh` (or `source ~/.zshrc`).
+`install.sh` is safe to re-run. It:
+- symlinks each config into place, backing up any existing real file to `*.bak`;
+- checks for the required tools and prints an install command for your package manager if any are missing;
+- sets zsh as your default shell (`chsh`);
+- on WSL, writes the Windows-side WezTerm stub — and skips that step everywhere else.
+
+Then reload with `exec zsh` (or `source ~/.zshrc`).
