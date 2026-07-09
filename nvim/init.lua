@@ -1,3 +1,4 @@
+-- Leader
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
@@ -25,7 +26,7 @@ require('lazy').setup({
   },
 })
 
--- Harpoon keymaps
+-- Harpoon
 local harpoon = require('harpoon')
 harpoon:setup()
 
@@ -36,30 +37,31 @@ vim.keymap.set('n', '<leader>2', function() harpoon:list():select(2) end)
 vim.keymap.set('n', '<leader>3', function() harpoon:list():select(3) end)
 vim.keymap.set('n', '<leader>4', function() harpoon:list():select(4) end)
 
+-- Telescope
 local telescope = require('telescope.builtin')
 vim.keymap.set('n', '<leader>ff', telescope.find_files)
 vim.keymap.set('n', '<leader>fg', telescope.live_grep)
 vim.keymap.set('n', '<leader>fb', telescope.buffers)
 vim.keymap.set('n', '<leader>fh', telescope.help_tags)
 
+-- Editor options
 vim.opt.backspace = '2'
 vim.opt.showcmd = true
 vim.opt.laststatus = 2
 vim.opt.autowrite = true
 vim.opt.cursorline = true
 vim.opt.autoread = true
+vim.opt.swapfile = false
+vim.opt.termguicolors = true
 
--- use spaces for tabs etc.
+-- Indentation: use spaces for tabs
 vim.opt.tabstop = 2
 vim.opt.shiftwidth = 2
 vim.opt.shiftround = true
 vim.opt.expandtab = true
 
--- Escape remap
-vim.keymap.set('i', 'jk', '<Esc>')
-
-vim.cmd [[ set noswapfile ]]
-vim.cmd [[ set termguicolors ]]
-
---Line numbers
+-- Line numbers
 vim.wo.number = true
+
+-- Keymaps
+vim.keymap.set('i', 'jk', '<Esc>')  -- jk to escape insert mode

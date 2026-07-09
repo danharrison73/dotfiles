@@ -28,6 +28,9 @@ symlink() {
 # Bash
 symlink "$DOTFILES_DIR/bash/.bashrc" "$HOME/.bashrc"
 
+# Zsh
+symlink "$DOTFILES_DIR/zsh/.zshrc" "$HOME/.zshrc"
+
 # Neovim
 symlink "$DOTFILES_DIR/nvim/init.lua" "$HOME/.config/nvim/init.lua"
 
@@ -52,4 +55,4 @@ return dofile(wsl_config)
 EOF
 
 echo ""
-echo "Done. Reload your shell with: source ~/.bashrc"
+echo "Done. Reload your shell with: source ~/.zshrc  (or: exec zsh)"

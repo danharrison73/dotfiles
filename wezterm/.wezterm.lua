@@ -12,6 +12,7 @@ config.use_fancy_tab_bar = false
 config.hide_tab_bar_if_only_one_tab = true
 config.tab_bar_at_bottom = true
 
+-- Startup: open WSL and attach to (or create) a tmux session named "main"
 config.default_prog = { 'wsl.exe', '--', 'bash', '-lic', 'tmux new-session -A -s main' }
 
 -- Font
