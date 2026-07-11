@@ -1,20 +1,72 @@
 -- ============================================================================
---  tutorial.lua — a guided tour of the new LSP + autocompletion setup
+--  tutorial.lua — a guided tour of this neovim setup
 -- ============================================================================
 --
 --  Open this file in nvim:   nvim nvim/tutorial.lua
 --
---  Because it's a Lua file, the `lua_ls` language server (auto-installed by
---  mason on first launch) will attach automatically. Give it a second — you'll
---  see "lua_ls" show up in `:LspInfo`. Then walk through the sections below.
+--  It walks through every tool wired up in init.lua: the editor defaults,
+--  telescope, harpoon, autocompletion, and the LSP. Work top to bottom.
 --
---  If nothing works yet, run `:Mason` and confirm `lua-language-server` is
+--  Because it's a Lua file, the `lua_ls` language server (auto-installed by
+--  mason on first launch) attaches automatically — give it a second. If the
+--  LSP sections seem dead, run `:Mason` and confirm `lua-language-server` is
 --  installed, then `:LspInfo` to confirm it attached to this buffer.
+--
+--  The leader key is <Space> throughout.
 -- ============================================================================
 
 
 -- ----------------------------------------------------------------------------
---  1. AUTOCOMPLETION  (nvim-cmp)
+--  1. EDITOR BASICS  (options + core keymaps, no plugins)
+-- ----------------------------------------------------------------------------
+--  init.lua sets a handful of sensible defaults you'll feel immediately:
+--    * <Space> is the leader key (prefix for most custom mappings)
+--    * `jk` in insert mode escapes to normal mode — try it below
+--    * 2-space indentation, expandtab (tabs become spaces), shiftround
+--    * absolute line numbers, cursorline highlight, true colour
+--    * no swapfile; autoread + autowrite so buffers sync as you jump around
+--
+--  TRY IT: enter insert mode (i), type a few words on the next line, then
+--  press `jk` (quickly) instead of reaching for <Esc>.
+
+
+
+-- ----------------------------------------------------------------------------
+--  2. TELESCOPE  (fuzzy finder)
+-- ----------------------------------------------------------------------------
+--  Your main way to move around a project. All pickers are floating windows;
+--  type to fuzzy-filter, <CR> opens, <Esc> dismisses, <C-n>/<C-p> move.
+--
+--    <leader>ff   find files by name
+--    <leader>fg   live grep — search file *contents* across the project
+--    <leader>fb   switch between open buffers
+--    <leader>fh   search neovim's :help docs
+--
+--  TRY IT: press <leader>ff and type "init" to jump to init.lua. Then come
+--  back and press <leader>fg and search for "harpoon" to see grep in action.
+--  (telescope also powers `gd`/`gr` in the LSP section below.)
+
+
+-- ----------------------------------------------------------------------------
+--  3. HARPOON  (pin the few files you actually live in)
+-- ----------------------------------------------------------------------------
+--  Telescope is for searching; harpoon is for the 2-4 files you return to
+--  constantly. Mark them once, then teleport by number — no fuzzy typing.
+--
+--    <leader>a    add the current file to the harpoon list
+--    <leader>h    toggle the quick menu (reorder / remove entries here)
+--    <leader>1    jump to harpoon file 1
+--    <leader>2    jump to harpoon file 2
+--    <leader>3    jump to harpoon file 3
+--    <leader>4    jump to harpoon file 4
+--
+--  TRY IT: press <leader>a here to pin this file, open init.lua (<leader>ff),
+--  press <leader>a there too, then bounce between them with <leader>1 and
+--  <leader>2. Press <leader>h to see and edit the list.
+
+
+-- ----------------------------------------------------------------------------
+--  4. AUTOCOMPLETION  (nvim-cmp)
 -- ----------------------------------------------------------------------------
 --  Completion pops up as you type. Sources are: LSP, snippets (LuaSnip),
 --  words in this buffer, and filesystem paths.
@@ -36,7 +88,7 @@
 
 
 -- ----------------------------------------------------------------------------
---  2. HOVER + GO-TO-DEFINITION + REFERENCES  (LSP)
+--  5. HOVER + GO-TO-DEFINITION + REFERENCES  (LSP)
 -- ----------------------------------------------------------------------------
 --  `greet` is defined here and used twice further down.
 
@@ -55,9 +107,11 @@ local second = greet('linus')
 
 
 -- ----------------------------------------------------------------------------
---  3. DIAGNOSTICS  (LSP)
+--  6. DIAGNOSTICS  (LSP)
 -- ----------------------------------------------------------------------------
---  lua_ls flags problems inline. The two locals below are intentional:
+--  Problems show up inline as you go: virtual text on the line, a sign in the
+--  gutter, and an underline on the offending code. The two locals below are
+--  intentional:
 --    * `unused_local` is assigned but never read  -> a warning
 --    * calling greet() with no argument            -> a type hint
 
@@ -74,7 +128,7 @@ local oops = greet()
 
 
 -- ----------------------------------------------------------------------------
---  4. SNIPPETS  (LuaSnip, surfaced through cmp)
+--  7. SNIPPETS  (LuaSnip, surfaced through cmp)
 -- ----------------------------------------------------------------------------
 --  Snippet suggestions appear in the completion menu with a snippet icon.
 --  Confirm one with <CR>, then use <Tab> / <S-Tab> to hop between its

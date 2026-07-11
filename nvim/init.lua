@@ -103,6 +103,13 @@ vim.lsp.config('*', {
   capabilities = require('cmp_nvim_lsp').default_capabilities(),
 })
 
+-- Inline diagnostics: message text, gutter signs, and underlines
+vim.diagnostic.config({
+  virtual_text = true,
+  signs = true,
+  underline = true,
+})
+
 -- Buffer-local LSP keymaps, set only once a server attaches.
 -- Navigation (definitions/references) goes through telescope so we reuse the
 -- picker we already have; the rest are actions telescope can't do.
