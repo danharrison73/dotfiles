@@ -9,7 +9,7 @@ My personal configuration for a WSL2 (Ubuntu) + WezTerm setup on Windows.
 | **zsh** | `zsh/.zshrc` | `~/.zshrc` | Login shell. History, prompt, completion, conda, nvm, fzf. |
 | **bash** | `bash/.bashrc` | `~/.bashrc` | Kept as a fallback shell. |
 | **git** | `git/.gitconfig`, `git/.gitignore_global` | `~/.gitconfig`, `~/.gitignore_global` | Identity, aliases, and a global ignore list. |
-| **nvim** | `nvim/init.lua`, `nvim/lazy-lock.json` | `~/.config/nvim/` | lazy.nvim plugin manager (version-pinned), harpoon + telescope. |
+| **nvim** | `nvim/init.lua`, `nvim/lazy-lock.json` | `~/.config/nvim/` | lazy.nvim plugin manager (version-pinned), harpoon + telescope, LSP (mason) + autocompletion (nvim-cmp). |
 | **tmux** | `tmux/.tmux.conf` | `~/.tmux.conf` | `C-Space` prefix, vim-style panes, Tokyo Night status bar. |
 | **wezterm** | `wezterm/.wezterm.lua` | Windows `~/.wezterm.lua` (stub) | Terminal emulator. Launches WSL into a tmux session. |
 | **claude** | `claude/settings.json`, `claude/statusline-command.sh` | `~/.claude/` | Claude Code global settings + custom status line. |
@@ -33,6 +33,9 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - **lazy.nvim** self-bootstraps on first launch; `lazy-lock.json` pins plugin versions so every machine installs the same commits.
 - **harpoon** — `<leader>a` add, `<leader>h` menu, `<leader>1..4` jump.
 - **telescope** — `<leader>ff` files, `<leader>fg` grep, `<leader>fb` buffers, `<leader>fh` help.
+- **LSP** — [mason.nvim](https://github.com/williamboman/mason.nvim) installs language servers, wired to `nvim-lspconfig` via `mason-lspconfig`. `lua_ls` is auto-installed; add more via `ensure_installed` or `:Mason`. Requires nvim 0.11+ (uses the `vim.lsp.config`/`vim.lsp.enable` API).
+  - Keymaps (buffer-local, on attach): `gd` definition and `gr` references (routed through telescope for preview + fuzzy filter), `K` hover, `<leader>rn` rename, `<leader>ca` code action, `[d`/`]d` prev/next diagnostic (floats the message on jump).
+- **Autocompletion** — [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) with LSP, buffer, and path sources, plus LuaSnip for snippets. `<Tab>`/`<S-Tab>` cycle items and jump snippets, `<CR>` confirms, `<C-Space>` triggers completion, `<C-f>`/`<C-b>` scroll docs.
 - Leader is `<Space>`; `jk` escapes insert mode; 2-space indentation, line numbers, no swapfile.
 
 ### tmux (`tmux/.tmux.conf`)
