@@ -48,6 +48,16 @@ autoload -Uz bashcompinit && bashcompinit
 # colourise the completion menu using LS_COLORS
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 
+# --- Keybindings -------------------------------------------------------------
+# Use vi keybindings for command-line editing (starts in insert mode).
+bindkey -v
+KEYTIMEOUT=1                          # shorten the ESC -> normal-mode delay (10ms)
+bindkey -M viins 'jk' vi-cmd-mode     # 'jk' leaves insert mode (like inoremap jk <Esc>)
+# Keep a few familiar emacs-style bindings in insert mode.
+bindkey '^R' history-incremental-search-backward  # Ctrl-R history search
+bindkey '^A' beginning-of-line
+bindkey '^E' end-of-line
+
 # --- Colours & aliases -------------------------------------------------------
 if [ -x /usr/bin/dircolors ]; then
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
@@ -92,7 +102,7 @@ fi
 # Add your default key (optional: remove if you prefer manual adding)
 ssh-add ~/.ssh/id_rsa 2>/dev/null
 
-export EDITOR="vim"
+export EDITOR="nvim"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm

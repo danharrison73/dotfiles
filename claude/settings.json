@@ -5,6 +5,7 @@
     "sessionUrl": false
   },
   "model": "opus[1m]",
+  "editorMode": "vim",
   "hooks": {
     "Notification": [
       {
