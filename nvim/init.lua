@@ -15,6 +15,21 @@ vim.opt.rtp:prepend(lazypath)
 
 -- Plugins
 require('lazy').setup({
+  -- Colorscheme. Loaded eagerly and before everything else (priority) so no
+  -- other plugin paints a window against the default palette first.
+  {
+    'folke/tokyonight.nvim',
+    lazy = false,
+    priority = 1000,
+  },
+  -- Treesitter: real parse tree per buffer, which is what lets highlighting
+  -- tell a call from a definition from a plain variable. `master` is the
+  -- branch that builds parsers with a C compiler alone (no tree-sitter CLI).
+  {
+    'nvim-treesitter/nvim-treesitter',
+    branch = 'master',
+    build = ':TSUpdate',
+  },
   {
     'ThePrimeagen/harpoon',
     branch = 'harpoon2',
@@ -39,6 +54,50 @@ require('lazy').setup({
       'saadparwaiz1/cmp_luasnip', -- snippet source
     },
   },
+  -- Debugging (DAP). nvim-dap speaks the same wire protocol VS Code's debugger
+  -- does, against the same debugpy adapter — so breakpoints, stepping and
+  -- inspection behave identically. What VS Code adds on top is only the UI,
+  -- which dap-ui supplies (scopes, stacks, breakpoints, watches, repl).
+  {
+    'rcarriga/nvim-dap-ui',
+    dependencies = {
+      'mfussenegger/nvim-dap',
+      'nvim-neotest/nvim-nio',           -- dap-ui's async runtime
+      'theHamsta/nvim-dap-virtual-text', -- inline variable values beside the code
+    },
+  },
+})
+
+-- Colorscheme.
+-- Syntax colour comes from three stacked layers, each seeing more than the last:
+--   1. treesitter  -- grammar: this name is a call / a definition / a parameter
+--   2. LSP semantic tokens -- types: this name is a class / a module / self
+--   3. this colorscheme -- maps the groups those two produce onto actual colours
+-- A colorscheme that doesn't define the treesitter + semantic-token groups
+-- leaves most of the file as undifferentiated foreground text, which is the
+-- failure mode the stock colorscheme has. tokyonight defines all of them.
+require('tokyonight').setup({
+  style = 'moon',
+  styles = {
+    keywords = { italic = false },  -- italics render as blurry in most terminals
+    comments = { italic = false },
+  },
+})
+vim.cmd.colorscheme('tokyonight')
+
+-- Treesitter.
+-- ensure_installed pulls the grammars; highlight.enable is what actually swaps
+-- the old regex :syntax engine out for tree-based highlighting.
+require('nvim-treesitter.configs').setup({
+  ensure_installed = { 'python', 'lua', 'rust', 'toml', 'json', 'yaml', 'markdown', 'vim', 'vimdoc' },
+  auto_install = true,   -- grab a missing grammar on first open of that filetype
+  highlight = {
+    enable = true,
+    -- Running the old regex engine alongside treesitter double-highlights and
+    -- the regex result frequently wins. Off.
+    additional_vim_regex_highlighting = false,
+  },
+  indent = { enable = true },
 })
 
 -- Harpoon
@@ -95,12 +154,41 @@ cmp.setup({
 require('mason').setup()
 require('mason-lspconfig').setup({
   -- Servers listed here are auto-installed and auto-enabled via vim.lsp.enable
-  ensure_installed = { 'lua_ls', 'rust_analyzer' },
+  --
+  -- Python is split across two servers on purpose:
+  --   basedpyright -- types, completion, and *semantic tokens*. Plain `pyright`
+  --                   does not serve semantic tokens at all, so it cannot tell
+  --                   the editor that a name is a class vs a module vs self.
+  --                   That difference is the whole reason for the `based` fork.
+  --   ruff         -- lint + format, far faster than pyright at both.
+  ensure_installed = { 'lua_ls', 'rust_analyzer', 'basedpyright', 'ruff' },
 })
 
 -- Advertise nvim-cmp's completion capabilities to every server (nvim 0.11 API)
 vim.lsp.config('*', {
   capabilities = require('cmp_nvim_lsp').default_capabilities(),
+})
+
+-- Ruff ships a thin hover that would race basedpyright's much richer one.
+-- Silence it so `K` always shows the type-aware result.
+vim.lsp.config('ruff', {
+  on_attach = function(client)
+    client.server_capabilities.hoverProvider = false
+  end,
+})
+
+-- basedpyright defaults to typeCheckingMode = 'recommended', which flags every
+-- unannotated argument and floods an ordinary codebase with diagnostics.
+-- 'standard' is the pyright-equivalent level: real errors, no annotation nagging.
+vim.lsp.config('basedpyright', {
+  settings = {
+    basedpyright = {
+      analysis = {
+        typeCheckingMode = 'standard',
+        diagnosticMode = 'openFilesOnly',
+      },
+    },
+  },
 })
 
 -- Inline diagnostics: message text, gutter signs, and underlines
@@ -148,6 +236,16 @@ vim.opt.expandtab = true
 -- which is what makes counted jumps aimable — read `7` in the gutter, press 7j.
 vim.wo.number = true
 vim.wo.relativenumber = true
+
+-- Python indents 4, not 2. The global 2-space default above is fine for lua and
+-- rust, but PEP 8 (and therefore ruff, which will reformat against you) wants 4.
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = 'python',
+  callback = function()
+    vim.opt_local.tabstop = 4
+    vim.opt_local.shiftwidth = 4
+  end,
+})
 
 -- Keymaps
 vim.keymap.set('i', 'jk', '<Esc>')  -- jk to escape insert mode
