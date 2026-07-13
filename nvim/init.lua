@@ -95,7 +95,7 @@ cmp.setup({
 require('mason').setup()
 require('mason-lspconfig').setup({
   -- Servers listed here are auto-installed and auto-enabled via vim.lsp.enable
-  ensure_installed = { 'lua_ls' },
+  ensure_installed = { 'lua_ls', 'rust_analyzer' },
 })
 
 -- Advertise nvim-cmp's completion capabilities to every server (nvim 0.11 API)
@@ -143,8 +143,11 @@ vim.opt.shiftwidth = 2
 vim.opt.shiftround = true
 vim.opt.expandtab = true
 
--- Line numbers
+-- Line numbers: hybrid. The cursor line shows its absolute number (for :123,
+-- stack traces, talking to someone else); every other line shows its DISTANCE,
+-- which is what makes counted jumps aimable — read `7` in the gutter, press 7j.
 vim.wo.number = true
+vim.wo.relativenumber = true
 
 -- Keymaps
 vim.keymap.set('i', 'jk', '<Esc>')  -- jk to escape insert mode
