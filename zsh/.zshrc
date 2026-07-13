@@ -51,7 +51,12 @@ zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 # --- Keybindings -------------------------------------------------------------
 # Use vi keybindings for command-line editing (starts in insert mode).
 bindkey -v
-KEYTIMEOUT=1                          # shorten the ESC -> normal-mode delay (10ms)
+# KEYTIMEOUT (in hundredths of a second) is also the window zsh waits for the
+# second key of a multi-key binding, so it has to be long enough to catch 'jk'.
+# At 1 (10ms) the 'jk' bind below never fires — you just get a literal "jk".
+# 20 (200ms) catches it comfortably; the cost is that a bare <Esc> takes that
+# long to drop into normal mode, which is fine since 'jk' is the way in here.
+KEYTIMEOUT=20
 bindkey -M viins 'jk' vi-cmd-mode     # 'jk' leaves insert mode (like inoremap jk <Esc>)
 # Keep a few familiar emacs-style bindings in insert mode.
 bindkey '^R' history-incremental-search-backward  # Ctrl-R history search
