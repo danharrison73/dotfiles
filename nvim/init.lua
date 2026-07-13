@@ -161,8 +161,17 @@ require('mason-lspconfig').setup({
   --                   the editor that a name is a class vs a module vs self.
   --                   That difference is the whole reason for the `based` fork.
   --   ruff         -- lint + format, far faster than pyright at both.
-  ensure_installed = { 'lua_ls', 'rust_analyzer', 'basedpyright', 'ruff' },
+  --
+  -- rust_analyzer is deliberately NOT here: it comes from rustup instead, as a
+  -- toolchain component, so its version is pinned to the same rustc it analyses.
+  -- A mason-installed copy updates on its own schedule and drifts out of step.
+  ensure_installed = { 'lua_ls', 'basedpyright', 'ruff' },
 })
+
+-- rust_analyzer, from rustup rather than mason (`rustup component add rust-analyzer`).
+-- mason-lspconfig only auto-enables what mason itself installed, so enable it by
+-- hand; lspconfig's default cmd finds `rust-analyzer` on PATH.
+vim.lsp.enable('rust_analyzer')
 
 -- Advertise nvim-cmp's completion capabilities to every server (nvim 0.11 API)
 vim.lsp.config('*', {
