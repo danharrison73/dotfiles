@@ -83,6 +83,33 @@ if ! have zoxide; then
   fi
 fi
 
+# --- rust-analyzer ----------------------------------------------------------
+# nvim/init.lua enables rust_analyzer with lspconfig's default cmd, i.e. a bare
+# `rust-analyzer` looked up on PATH -- deliberately NOT a mason-installed copy,
+# so the analyser and the rustc it analyses are always the same version.
+#
+# That makes it a rustup *component*, not a package: ~/.cargo/bin/rust-analyzer
+# already exists as a rustup proxy on any box with rustup, but until the
+# component is added the proxy just errors with "Unknown binary". Adding it is
+# idempotent, needs no sudo, and is a no-op once present -- so do it rather than
+# print advice. (~/.cargo/bin reaches PATH via the cargo env line in .zshrc.)
+if have rustup; then
+  if rustup component list --installed 2>/dev/null | grep -q '^rust-analyzer'; then
+    echo "  rust-analyzer: present"
+  else
+    info "Adding the rust-analyzer component (nvim's rust LSP)"
+    if rustup component add rust-analyzer; then
+      echo "  done"
+    else
+      warn "rustup component add rust-analyzer failed; rust files will have no LSP"
+    fi
+  fi
+else
+  warn "missing: rustup (no rust toolchain — rust files will have no LSP)"
+  echo "  install with: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+  echo "  then re-run this script to add the rust-analyzer component"
+fi
+
 # --- default shell ----------------------------------------------------------
 if have zsh; then
   login_shell="$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)"
