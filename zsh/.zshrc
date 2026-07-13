@@ -77,6 +77,18 @@ alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
 
+# vf: fuzzy-pick a file and open it in nvim.
+# A function rather than `alias vf='nvim $(fzf)'` for two reasons:
+#   * zsh DOES word-split command substitutions, so an unquoted $(fzf) turns
+#     "my file.txt" into three arguments. The quotes are load-bearing.
+#   * bailing out of fzf with <Esc> would otherwise still launch nvim (on an
+#     empty arg, which lands you in netrw on the cwd). The guard just returns.
+vf() {
+  local file
+  file=$(fzf) || return          # non-zero exit = you cancelled
+  [[ -n $file ]] && nvim "$file"
+}
+
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
 alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
