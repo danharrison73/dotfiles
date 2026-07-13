@@ -109,3 +109,10 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+
+# --- zoxide ------------------------------------------------------------------
+# Smarter cd: `z foo` jumps to the most-used dir matching foo, `zi` picks one
+# interactively via fzf. Must come after compinit so completions register.
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+fi

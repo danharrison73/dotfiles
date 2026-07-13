@@ -71,6 +71,18 @@ else
   fi
 fi
 
+# zoxide is checked separately: apt ships a years-old 0.4.x, so prefer the
+# upstream installer, which drops a current build in ~/.local/bin.
+if ! have zoxide; then
+  warn "missing: zoxide"
+  if have brew; then
+    echo "  install with: brew install zoxide"
+  else
+    echo "  install with: curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh"
+    echo "  (needs ~/.local/bin on your PATH)"
+  fi
+fi
+
 # --- default shell ----------------------------------------------------------
 if have zsh; then
   login_shell="$(getent passwd "$USER" 2>/dev/null | cut -d: -f7)"

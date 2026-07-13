@@ -23,6 +23,7 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - `compinit` completion (with `bashcompinit` so nvm's completion loads).
 - `ls`/`grep` colour aliases plus `ll`/`la`/`l`.
 - conda (via the `shell.zsh` hook), ssh-agent bootstrap, nvm, and fzf.
+- [zoxide](https://github.com/ajeetdsouza/zoxide) as a smarter `cd`: `z foo` jumps to the most-used directory matching `foo`, `zi` picks one interactively through fzf. The init is guarded on the binary being present, so the shell still starts cleanly without it.
 - Extra aliases can be dropped in `~/.zsh_aliases`.
 
 ### git (`git/`)
@@ -64,6 +65,7 @@ Global [Claude Code](https://claude.com/claude-code) config:
 - [ripgrep](https://github.com/BurntSushi/ripgrep)
 - [fzf](https://github.com/junegunn/fzf)
 - [fd](https://github.com/sharkdp/fd)
+- [zoxide](https://github.com/ajeetdsouza/zoxide) (smarter `cd`; install via the upstream script, not apt — apt ships a very old 0.4.x)
 - [jq](https://jqlang.github.io/jq/) (used by the Claude status line)
 
 ### On the wishlist
