@@ -37,7 +37,13 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - **LSP** — [mason.nvim](https://github.com/williamboman/mason.nvim) installs language servers, wired to `nvim-lspconfig` via `mason-lspconfig`. `lua_ls` is auto-installed; add more via `ensure_installed` or `:Mason`. Requires nvim 0.11+ (uses the `vim.lsp.config`/`vim.lsp.enable` API).
   - Keymaps (buffer-local, on attach): `gd` definition and `gr` references (routed through telescope for preview + fuzzy filter), `K` hover, `<leader>rn` rename, `<leader>ca` code action, `[d`/`]d` prev/next diagnostic (floats the message on jump).
 - **Autocompletion** — [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) with LSP, buffer, and path sources, plus LuaSnip for snippets. `<Tab>`/`<S-Tab>` cycle items and jump snippets, `<CR>` confirms, `<C-Space>` triggers completion, `<C-f>`/`<C-b>` scroll docs.
-- Leader is `<Space>`; `jk` escapes insert mode; 2-space indentation, line numbers, no swapfile.
+- Leader is `<Space>`; `jk` escapes insert mode; 2-space indentation, no swapfile.
+- **Hybrid line numbers** (`number` + `relativenumber`) — the cursor line shows its absolute number, every other line shows its distance. That gutter is what makes counted jumps (`7j`, `d2j`) aimable: read the number, type it.
+- **`tutorial.rs`** — the practice range. A tier-ordered walkthrough for becoming a power user, drilled against real Rust code sitting in the file. Each section explains the idea, then gives `TRY IT` exercises with concrete targets ("cursor anywhere in `timeout_ms`, press `ciw`, type `deadline_ms`"). Open it, work top to bottom, wreck the code, and reset with `:e!` — that's a repeatable 10-minute daily loop.
+  - Order is deliberate — grammar before plugins: motions → **text objects** → `.` → counts → insert → registers → visual/blockwise → macros → `:s`/`:g` → marks → telescope → harpoon → LSP → cmp. Tiers 1-4 are where the speed actually lives; plugins add capability but don't compound the way `ciw` does.
+  - It also explains *how to think* in vim (vim is a language, not a set of shortcuts) and how the rest of these dotfiles feed the editing loop.
+  - The LSP section needs `rust-analyzer` (`:Mason`, press `i` on it); `lua_ls` is the only server auto-installed.
+- `motions.lua` is the companion cheat-sheet for getting around a file.
 
 ### tmux (`tmux/.tmux.conf`)
 - Prefix rebound to `C-Space`; mouse on; windows/panes start at 1 and renumber.
