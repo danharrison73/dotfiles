@@ -4,8 +4,7 @@
     "pr": "",
     "sessionUrl": false
   },
-  "model": "opus[1m]",
-  "editorMode": "vim",
+  "model": "opus",
   "hooks": {
     "Notification": [
       {
@@ -46,6 +45,7 @@
     "clangd-lsp@claude-plugins-official": true
   },
   "tui": "fullscreen",
+  "editorMode": "vim",
   "remoteControlAtStartup": true,
   "agentPushNotifEnabled": true
 }
