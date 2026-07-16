@@ -39,6 +39,7 @@ info "Installing dotfiles from $DOTFILES_DIR"
 # --- symlinks ---------------------------------------------------------------
 symlink "$DOTFILES_DIR/bash/.bashrc"              "$HOME/.bashrc"
 symlink "$DOTFILES_DIR/zsh/.zshrc"                "$HOME/.zshrc"
+symlink "$DOTFILES_DIR/zsh/.zshenv"               "$HOME/.zshenv"
 symlink "$DOTFILES_DIR/git/.gitconfig"            "$HOME/.gitconfig"
 symlink "$DOTFILES_DIR/git/.gitignore_global"     "$HOME/.gitignore_global"
 symlink "$DOTFILES_DIR/nvim/init.lua"             "$HOME/.config/nvim/init.lua"
@@ -92,7 +93,8 @@ fi
 # already exists as a rustup proxy on any box with rustup, but until the
 # component is added the proxy just errors with "Unknown binary". Adding it is
 # idempotent, needs no sudo, and is a no-op once present -- so do it rather than
-# print advice. (~/.cargo/bin reaches PATH via the cargo env line in .zshrc.)
+# print advice. (~/.cargo/bin reaches PATH via the cargo env line in .zshenv, so
+# that the non-interactive shell nvim spawns the LSP from can see it too.)
 if have rustup; then
   if rustup component list --installed 2>/dev/null | grep -q '^rust-analyzer'; then
     echo "  rust-analyzer: present"

@@ -125,10 +125,8 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
-# Rust toolchain. rustup normally appends this line to ~/.zshrc itself, but that
-# file is a symlink into this repo, so the edit never stuck -- leaving rustc and
-# cargo installed but off PATH, and invisible to rust-analyzer inside nvim.
-[ -f "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
+# Rust toolchain lives in .zshenv, not here -- non-interactive shells never read
+# this file, and rust-analyzer/cargo have to be on their PATH too.
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
