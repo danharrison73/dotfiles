@@ -89,7 +89,7 @@ vim.cmd.colorscheme('tokyonight')
 -- ensure_installed pulls the grammars; highlight.enable is what actually swaps
 -- the old regex :syntax engine out for tree-based highlighting.
 require('nvim-treesitter.configs').setup({
-  ensure_installed = { 'python', 'lua', 'rust', 'toml', 'json', 'yaml', 'markdown', 'vim', 'vimdoc' },
+  ensure_installed = { 'python', 'lua', 'rust', 'toml', 'json', 'yaml', 'markdown', 'vim', 'vimdoc', 'c_sharp' },
   auto_install = true,   -- grab a missing grammar on first open of that filetype
   highlight = {
     enable = true,
@@ -162,9 +162,10 @@ require('mason-lspconfig').setup({
   --                   That difference is the whole reason for the `based` fork.
   --   ruff         -- lint + format, far faster than pyright at both.
   --
-  -- rust_analyzer is deliberately NOT here: it comes from rustup instead, as a
-  -- toolchain component, so its version is pinned to the same rustc it analyses.
-  -- A mason-installed copy updates on its own schedule and drifts out of step.
+  -- rust_analyzer and roslyn_ls are deliberately NOT here: each comes from its
+  -- own language toolchain instead of mason, so its version tracks the compiler
+  -- it analyses rather than drifting on mason's own schedule. Both are enabled
+  -- by hand below.
   ensure_installed = { 'lua_ls', 'basedpyright', 'ruff' },
 })
 
@@ -172,6 +173,33 @@ require('mason-lspconfig').setup({
 -- mason-lspconfig only auto-enables what mason itself installed, so enable it by
 -- hand; lspconfig's default cmd finds `rust-analyzer` on PATH.
 vim.lsp.enable('rust_analyzer')
+
+-- roslyn_ls, C#/.NET. Preferred over omnisharp, which is now in maintenance mode.
+-- lspconfig already ships the full roslyn_ls config (solution/project detection,
+-- inlay hints, code lens); all that's missing is the server binary and a runtime
+-- new enough to run it. install.sh handles both (see its roslyn section):
+--   * the server itself isn't in the SDK, mason has no package, and the community
+--     dotnet-tool repackage is broken -- so it's pulled from Microsoft's vs-impl
+--     NuGet feed, into ~/.local/share/roslyn-ls/.
+--   * that server is framework-dependent and wants a newer .NET than the system
+--     has, so install.sh drops a private SDK in ~/.dotnet and a `run` launcher
+--     that scopes it (DOTNET_ROOT) to this server alone -- the system dotnet is
+--     left untouched. cmd points at that launcher.
+-- The default cmd here is only a fallback for the rare box that already has a
+-- new-enough system runtime; install.sh overwrites `run` to match what it fetched.
+-- Unlike lspconfig's bare `{exe, '--stdio'}`, this server also *requires*
+-- --logLevel and --extensionLogDirectory, so pass them explicitly.
+local roslyn_log = vim.fn.stdpath('log') .. '/roslyn-ls'
+vim.fn.mkdir(roslyn_log, 'p')
+vim.lsp.config('roslyn_ls', {
+  cmd = {
+    vim.env.HOME .. '/.local/share/roslyn-ls/run',
+    '--stdio',
+    '--logLevel', 'Information',
+    '--extensionLogDirectory', roslyn_log,
+  },
+})
+vim.lsp.enable('roslyn_ls')
 
 -- Advertise nvim-cmp's completion capabilities to every server (nvim 0.11 API)
 vim.lsp.config('*', {
