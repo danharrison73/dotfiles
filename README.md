@@ -6,7 +6,7 @@ My personal configuration for a WSL2 (Ubuntu) + WezTerm setup on Windows.
 
 | Config | Path | Symlinked to | Notes |
 | --- | --- | --- | --- |
-| **zsh** | `zsh/.zshrc` | `~/.zshrc` | Login shell. History, prompt, completion, conda, nvm, fzf. |
+| **zsh** | `zsh/.zshrc`, `zsh/.zshenv` | `~/.zshrc`, `~/.zshenv` | Login shell. History, prompt, completion, conda, nvm, fzf. `.zshenv` holds what non-interactive shells need on PATH too (the rust and .NET toolchains). |
 | **bash** | `bash/.bashrc` | `~/.bashrc` | Kept as a fallback shell. |
 | **git** | `git/.gitconfig`, `git/.gitignore_global` | `~/.gitconfig`, `~/.gitignore_global` | Identity, aliases, and a global ignore list. |
 | **nvim** | `nvim/init.lua`, `nvim/lazy-lock.json` | `~/.config/nvim/` | lazy.nvim plugin manager (version-pinned), harpoon + telescope, LSP (mason) + autocompletion (nvim-cmp). |
