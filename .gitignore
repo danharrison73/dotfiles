@@ -5,6 +5,7 @@
 claude/.credentials.json
 claude/projects/
 claude/history.jsonl
+**/.claude/settings.local.json
 
 # OS junk
 .DS_Store
