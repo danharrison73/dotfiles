@@ -136,3 +136,5 @@ export NVM_DIR="$HOME/.nvm"
 if command -v zoxide >/dev/null 2>&1; then
     eval "$(zoxide init zsh)"
 fi
+
+export BROWSER="$HOME/.local/bin/chrome-wsl"
