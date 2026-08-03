@@ -46,6 +46,7 @@ symlink "$DOTFILES_DIR/nvim/init.lua"             "$HOME/.config/nvim/init.lua"
 symlink "$DOTFILES_DIR/nvim/lazy-lock.json"       "$HOME/.config/nvim/lazy-lock.json"
 symlink "$DOTFILES_DIR/tmux/.tmux.conf"           "$HOME/.tmux.conf"
 symlink "$DOTFILES_DIR/claude/settings.json"      "$HOME/.claude/settings.json"
+symlink "$DOTFILES_DIR/claude/CLAUDE.md"          "$HOME/.claude/CLAUDE.md"
 symlink "$DOTFILES_DIR/claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
 
 # --- dependency check -------------------------------------------------------

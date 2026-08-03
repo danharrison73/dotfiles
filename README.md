@@ -12,7 +12,7 @@ My personal configuration for a WSL2 (Ubuntu) + WezTerm setup on Windows.
 | **nvim** | `nvim/init.lua`, `nvim/lazy-lock.json` | `~/.config/nvim/` | lazy.nvim plugin manager (version-pinned), harpoon + telescope, LSP (mason) + autocompletion (nvim-cmp). |
 | **tmux** | `tmux/.tmux.conf` | `~/.tmux.conf` | `C-Space` prefix, vim-style panes, Tokyo Night status bar. |
 | **wezterm** | `wezterm/.wezterm.lua` | Windows `~/.wezterm.lua` (stub) | Terminal emulator. Launches WSL into a tmux session. |
-| **claude** | `claude/settings.json`, `claude/statusline-command.sh` | `~/.claude/` | Claude Code global settings + custom status line. |
+| **claude** | `claude/settings.json`, `claude/CLAUDE.md`, `claude/statusline-command.sh` | `~/.claude/` | Claude Code global settings, house style, and custom status line. |
 
 ## Configs
 
@@ -61,6 +61,7 @@ The primary interactive shell. Ported from the old `.bashrc`:
 ### claude (`claude/`)
 Global [Claude Code](https://claude.com/claude-code) config:
 - `settings.json` — model, notification/stop sound hooks (Windows), enabled plugins, and the status line command.
+- `CLAUDE.md` — global instructions, loaded into every session in every directory. Currently: maths notation, routed by destination — Unicode glyphs (∫, Σ, x̄) in terminal replies since LaTeX source is unreadable there, and real LaTeX (`$…$`) in `.md`/`.tex`/`.ipynb` files, which get read through a renderer.
 - `statusline-command.sh` — custom status line showing model, effort, context %, cost, rate limits, and git state (needs `jq`).
 
 ## Tools I use
