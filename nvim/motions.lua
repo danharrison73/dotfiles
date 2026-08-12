@@ -140,10 +140,19 @@ local edit_me = "build(one, two, three)"
 --  NEO-TREE  (nvim-neo-tree/neo-tree.nvim) — the sidebar tree, for browsing
 --  structure rather than jumping to a file you can already name.
 --    <leader>e    toggle the sidebar, revealing the current file in the tree
---    <CR> / l     expand a directory in place (or open a file)
---    h / z        collapse this directory / collapse all
---    a  d  r  c   add / delete / rename / copy under the cursor
---    H            toggle hidden (gitignored) files
+--    <space>      expand / collapse the directory under the cursor, in place
+--    <CR>         open — a file in the last window, a directory expands it
+--    C  /  z      collapse this node / collapse every node
+--    <bs>         move the tree root up one directory
+--    .            make the directory under the cursor the new root
+--    s  /  S  /  t  open in a vsplit / split / new tab
+--    P            floating preview without leaving the tree (<C-f>/<C-b> scroll)
+--    a  A  d  r   add file / add directory / delete / rename
+--    y  x  p      copy / cut / paste under the cursor
+--    H            toggle hidden + gitignored files
+--    /  f         fuzzy-find within the tree / filter and keep the filter
+--    [g  ]g       previous / next git-modified file
+--    <  >         switch source: filesystem / buffers / git status
 --    ?            full keymap help, inside the tree
 --
 --  HARPOON  (ThePrimeagen/harpoon, branch harpoon2)
