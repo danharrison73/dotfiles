@@ -134,6 +134,8 @@ local edit_me = "build(one, two, three)"
 --    <leader>fg   live grep — search file *contents* across the project
 --    <leader>fb   jump between open buffers
 --    <leader>fh   search neovim's :help docs
+--    <leader>fe   file browser, opened at the current file's directory
+--                 (telescope-file-browser.nvim; also creates/renames/deletes)
 --
 --  HARPOON  (ThePrimeagen/harpoon, branch harpoon2)
 --    <leader>a    pin the current file to the list

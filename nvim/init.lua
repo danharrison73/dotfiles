@@ -39,6 +39,10 @@ require('lazy').setup({
     'nvim-telescope/telescope.nvim',
     dependencies = { 'nvim-lua/plenary.nvim' }
   },
+  {
+    'nvim-telescope/telescope-file-browser.nvim',
+    dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' }
+  },
   -- LSP: mason installs language servers, mason-lspconfig bridges to lspconfig
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
@@ -117,6 +121,11 @@ vim.keymap.set('n', '<leader>ff', telescope.find_files)
 vim.keymap.set('n', '<leader>fg', telescope.live_grep)
 vim.keymap.set('n', '<leader>fb', telescope.buffers)
 vim.keymap.set('n', '<leader>fh', telescope.help_tags)
+-- File browser: an extension, not a builtin, so it loads and is called separately.
+require('telescope').load_extension('file_browser')
+vim.keymap.set('n', '<leader>fe', function()
+  require('telescope').extensions.file_browser.file_browser({ path = '%:p:h' })
+end)
 
 -- Autocompletion (nvim-cmp + LuaSnip)
 local cmp = require('cmp')
