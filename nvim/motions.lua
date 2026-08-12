@@ -137,6 +137,15 @@ local edit_me = "build(one, two, three)"
 --    <leader>fe   file browser, opened at the current file's directory
 --                 (telescope-file-browser.nvim; also creates/renames/deletes)
 --
+--  NEO-TREE  (nvim-neo-tree/neo-tree.nvim) — the sidebar tree, for browsing
+--  structure rather than jumping to a file you can already name.
+--    <leader>e    toggle the sidebar, revealing the current file in the tree
+--    <CR> / l     expand a directory in place (or open a file)
+--    h / z        collapse this directory / collapse all
+--    a  d  r  c   add / delete / rename / copy under the cursor
+--    H            toggle hidden (gitignored) files
+--    ?            full keymap help, inside the tree
+--
 --  HARPOON  (ThePrimeagen/harpoon, branch harpoon2)
 --    <leader>a    pin the current file to the list
 --    <leader>h    toggle the quick menu (reorder / remove pins)

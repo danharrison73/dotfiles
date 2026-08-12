@@ -43,6 +43,18 @@ require('lazy').setup({
     'nvim-telescope/telescope-file-browser.nvim',
     dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' }
   },
+  -- Sidebar file tree with expandable directories, VS Code style. Complements
+  -- telescope rather than replacing it: telescope finds a file you can name,
+  -- neo-tree shows you the shape of a directory you can't.
+  {
+    'nvim-neo-tree/neo-tree.nvim',
+    branch = 'v3.x',
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'MunifTanjim/nui.nvim',
+      'nvim-tree/nvim-web-devicons', -- wezterm falls back to bundled nerd symbols
+    },
+  },
   -- LSP: mason installs language servers, mason-lspconfig bridges to lspconfig
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
@@ -126,6 +138,21 @@ require('telescope').load_extension('file_browser')
 vim.keymap.set('n', '<leader>fe', function()
   require('telescope').extensions.file_browser.file_browser({ path = '%:p:h' })
 end)
+
+-- Neo-tree. `reveal` opens the sidebar with the current file already selected
+-- and its parent directories expanded, so <leader>e always answers "where am I".
+require('neo-tree').setup({
+  close_if_last_window = true, -- don't leave a lone sidebar behind when you :q the file
+  filesystem = {
+    follow_current_file = { enabled = true }, -- tree tracks the buffer you switch to
+    use_libuv_file_watcher = true,            -- pick up files created outside nvim
+    filtered_items = {
+      hide_dotfiles = false,
+      hide_gitignored = true,
+    },
+  },
+})
+vim.keymap.set('n', '<leader>e', '<Cmd>Neotree toggle reveal left<CR>')
 
 -- Autocompletion (nvim-cmp + LuaSnip)
 local cmp = require('cmp')
