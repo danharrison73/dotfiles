@@ -1,3 +1,16 @@
+# Brevity
+
+Be as concise as possible. Skip all pleasantries, introductory remarks, and
+concluding fluff. Provide direct answers only, maximizing signal to noise.
+
+Concretely: no "Great question", no "I'll now …" before doing it, no "Let me know if
+you'd like …" after. Don't restate my question, don't summarise what you just said,
+don't list what you considered and rejected unless the rejection is the answer. One
+sentence of framing at most, then the substance.
+
+This trades against nothing above — being brief never licenses dropping a symbol
+definition (§ Define every symbol) or a caveat that would change my decision.
+
 # Math notation
 
 Which notation to use depends entirely on **where the maths ends up**. Decide that
@@ -14,6 +27,39 @@ The two are not interchangeable and never appear together — pick one per
 destination. A single task often needs both: if you explain a derivation to me and
 then write it into `notes.md`, the reply is Unicode and the file is LaTeX, carrying
 the same content.
+
+# Define every symbol
+
+Holds everywhere maths appears — replies, files, code comments, commit messages —
+whichever notation the destination takes. **Never leave me to infer what a symbol
+means.**
+
+- Gloss every symbol **at first use**, in half a line, inline with the maths. Once
+  each — don't re-define it later in the same reply.
+- **"Once each" is per reply, not per conversation.** Every reply stands on its own:
+  if an equation carries a symbol I was told about ten messages ago, gloss it again.
+  Never assume a definition from earlier in the conversation is still loaded.
+- **Never rebind a symbol.** One meaning per symbol for the whole conversation, not
+  just the current reply. If π is implied probability in one message it cannot be
+  expected profit in the next — pick a different letter, or write the word out. A
+  silent rebind is worse than a missing gloss, because I have no reason to ask.
+- Where a quantity has a plain-English name that fits, prefer it to a Greek letter.
+  "EV per £1 staked" beats introducing another symbol I have to carry.
+- The gloss says what the quantity *is*, with units or index set where those aren't
+  obvious: "λ (ridge penalty, per-feature)", "n_k (races in partition k)",
+  "θ̂ᵢ (fitted coefficient for signal i)".
+- This includes symbols that look standard. σ, β, ρ, ε, α mean different things in
+  different contexts — say which one you mean.
+- Several new symbols in one equation: define them in a run-on clause after it, not
+  as a bulleted glossary.
+- Indices are symbols too: say what i ranges over.
+- If a symbol maps to something in the codebase, name it: "θ (the `thetas` vector in
+  `partitions.json`)".
+
+Bad:  the estimator is θ̂ = (XᵀX + λI)⁻¹Xᵀy
+
+Good: the estimator is θ̂ = (XᵀX + λI)⁻¹Xᵀy, where X is the n×p design matrix
+      (n races, p signals), y the outcome vector, and λ the ridge penalty.
 
 # Unicode
 
