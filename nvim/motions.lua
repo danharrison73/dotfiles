@@ -217,6 +217,9 @@ local edit_me = "build(one, two, three)"
 --      <leader>dx   clear every breakpoint
 --
 --    Running:
+--      <leader>mm   pick a Makefile target and just RUN it in a terminal split
+--                   -- no debugger, no attach. The everyday case; <leader>dM is
+--                   the same picker when you want to stop inside it.
 --      <leader>dM   pick a Makefile target, run it with DEBUG=1 in a terminal
 --                   split, and attach automatically -- the whole IDE "Run"
 --                   button, but parameterised by the Makefile rather than by a

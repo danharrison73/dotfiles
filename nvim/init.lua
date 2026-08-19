@@ -488,7 +488,11 @@ dap.adapters.make_debugpy = function(cb, config)
   })
 end
 
-local function make_debug()
+-- debug=false is the same picker without the debugger: the target just runs in
+-- the split. That's the common case -- most runs you only want to watch, and
+-- attaching a debugger to a run you aren't stepping through costs tracing
+-- overhead for nothing.
+local function make_run(debug)
   local from = vim.fn.expand('%:p:h')
   if from == '' then from = vim.fn.getcwd() end
   local makefile = vim.fs.find('Makefile', { upward = true, path = from })[1]
@@ -511,15 +515,15 @@ local function make_debug()
   end
 
   vim.ui.select(targets, {
-    prompt = 'make <target> DEBUG=1',
+    prompt = debug and 'make <target> DEBUG=1' or 'make <target>',
     format_item = function(t) return string.format('%-22s %s', t.name, t.desc) end,
   }, function(target)
     if not target then return end
     -- Makefile variables are how a target is parameterised, so ask for them
     -- instead of editing the Makefile: `BOOTSTRAPS=5 CONFIDENCE=0.8`.
     local vars = vim.fn.input('make vars (optional): ')
-    local cmd = string.format('make -C %s %s DEBUG=1 %s',
-      vim.fn.shellescape(root), target.name, vars)
+    local cmd = string.format('make -C %s %s %s%s',
+      vim.fn.shellescape(root), target.name, debug and 'DEBUG=1 ' or '', vars)
 
     -- The process gets a terminal split -- its stdout, and the equivalent of VS
     -- Code's integrated terminal. It outlives the session so the run's output
@@ -529,6 +533,7 @@ local function make_debug()
     vim.b.dap_make_terminal = true   -- tagged so <leader>dq can find it again
     vim.cmd('wincmd p')   -- back to the code, so breakpoints stay one keypress away
 
+    if not debug then return end
     -- Fired immediately: the adapter's max_retries above is what waits for the
     -- port, so there's nothing to poll and no delay to guess at.
     dap.run({
@@ -539,7 +544,8 @@ local function make_debug()
     })
   end)
 end
-vim.keymap.set('n', '<leader>dM', make_debug)
+vim.keymap.set('n', '<leader>dM', function() make_run(true) end)   -- debug it
+vim.keymap.set('n', '<leader>mm', function() make_run(false) end)  -- just run it
 
 -- <leader>dq -- put the editor back how it was. dap-ui's panes already close
 -- themselves when a session ends (the listeners above fire on event_terminated
