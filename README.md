@@ -90,17 +90,6 @@ Global [Claude Code](https://claude.com/claude-code) config:
 - `keybindings.json` — laptop-friendly scrolling. `settings.json` sets `"tui": "fullscreen"`, where the conversation is a scrollable view whose only default scroll keys are `pageup`/`pagedown` — which a laptop reaches through `Fn`. These add vim keys on Alt: `M-u`/`M-d` half page, `M-b`/`M-f` full page, `M-g`/`M-G` top/bottom (the file itself spells them `alt+u`, `alt+shift+g` and so on — Claude's own syntax, not tmux's `M-` shorthand). Alt was chosen because Claude's own bindings use `alt+p/o/t/w/v` and tmux's use `M-h/j/k/l`, `M-z`, `M-1`–`M-5`, `M-H/M-L` — no overlap — and because tmux forwards `M-u`/`M-d` into alternate-screen panes rather than swallowing them.
 - `statusline-command.sh` — custom status line showing model, effort, context %, cost, rate limits, and git state (needs `jq`).
 
-### wispr-bridge (`bin/wispr-bridge.sh`)
-Dictation from [Wispr Flow](https://wisprflow.ai) into the focused tmux pane, hands free. Started automatically from `.zshrc` (guarded, one instance per machine); run it by hand with `./bin/wispr-bridge.sh &`.
-
-Flow cannot insert text into a terminal at all. Measured, not assumed:
-- Its automatic insert sends **no keystroke** — `cat -v` captured zero bytes during a dictation while manual typing in the same capture came through. It writes through a Windows text-control API, and a GPU-rendered terminal is not an edit control.
-- What it *does* do reliably is put the transcript on the Windows clipboard and **restore the previous contents ~455ms later** (polled at 60ms: set `18:31:58.171`, reverted `18:31:58.626`). That race is why every paste-based workaround fails, since Claude Code inside WSL reads the clipboard through WSLg's bridge, which is slower.
-
-The bridge turns that race into the trigger: a single long-lived PowerShell process polls the clipboard every 50ms, and when a value appears and the clipboard snaps back to its previous contents within 1.5s, that value was a transcript — so it's sent to `tmux load-buffer` and pasted with `paste-buffer -p` (bracketed, so nothing auto-submits). An ordinary copy persists and therefore never matches.
-
-Three things that bite when writing this, all now commented in the script: `powershell.exe -Command` with a *multi-line* string silently executes nothing; `-f` inside a method call needs its own parentheses or the format arguments are swallowed; and `tr` in the pipeline block-buffers, so the CR must be stripped per-field in the loop instead.
-
 ## Tools I use
 - [tmux](https://github.com/tmux/tmux)
 - [wezterm](https://wezfurlong.org/wezterm/)

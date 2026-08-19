@@ -4,22 +4,6 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
-# --- Terminal ----------------------------------------------------------------
-# Flow control off. `ixon` (the default) makes the tty swallow ^S and ^Q for
-# XON/XOFF: ^S silently freezes the terminal until ^Q is pressed, which reads as
-# a hang rather than a feature and is never what's wanted here. Turning it off
-# also returns ^Q to zsh's quoted-insert. Guarded on a tty so it can't fire in a
-# non-interactive context.
-[[ -t 0 ]] && stty -ixon
-
-# Wispr Flow bridge. Flow cannot type into a terminal, but it does put each
-# transcript on the Windows clipboard and restore the previous contents ~455ms
-# later; bin/wispr-bridge.sh watches for exactly that and pastes it into the
-# focused tmux pane. One instance per machine, hence the pgrep guard.
-if [[ -t 0 ]] && ! pgrep -f 'wispr-bridge.sh' >/dev/null 2>&1; then
-  (~/dotfiles/bin/wispr-bridge.sh >/dev/null 2>&1 &) 
-fi
-
 # --- History -----------------------------------------------------------------
 # Equivalent of bash's HISTCONTROL=ignoreboth (ignore dups + space-prefixed),
 # histappend, and the HISTSIZE/HISTFILESIZE settings.
