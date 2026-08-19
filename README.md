@@ -71,6 +71,7 @@ The primary interactive shell. Ported from the old `.bashrc`:
 ### wezterm (`wezterm/.wezterm.lua`)
 - JetBrains Mono, rose-pine-moon, acrylic-blurred transparent window.
 - Bottom tab bar, blinking bar cursor, 10k scrollback.
+- `Ctrl+V` pastes here rather than passing through. WezTerm's paste is normally `Ctrl+Shift+V`, leaving plain `Ctrl+V` to reach the running program — where Claude Code reads it as `chat:imagePaste` and searches the clipboard for an image. Dictation tools such as Wispr Flow insert text by putting it on the clipboard and sending `Ctrl+V`, so the text never arrived as text. WezTerm now does the paste itself, from the Windows clipboard, as a bracketed paste.
 - `Shift+PageUp`/`Shift+PageDown` are forwarded rather than scrolling WezTerm's own scrollback — with tmux running that buffer holds stale repainted frames, not session output, so the keys belong to tmux's copy mode.
 - Boots straight into WSL + a tmux session named `main`.
 - WezTerm runs on Windows and can't follow WSL symlinks, so `install.sh` writes a
