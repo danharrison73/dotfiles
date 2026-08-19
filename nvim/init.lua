@@ -669,4 +669,11 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 })
 
 -- Keymaps
+-- Half-page scroll on M-u/M-d as well as C-u/C-d. tmux copy mode and the claude
+-- TUI both scroll on M-u/M-d now, so this makes one pair of keys scroll every
+-- pane whatever is running in it. C-u/C-d are kept, not replaced: they're what
+-- every vim doc, every plugin help file and every muscle memory assumes.
+vim.keymap.set({ 'n', 'x' }, '<M-u>', '<C-u>', { desc = 'half page up' })
+vim.keymap.set({ 'n', 'x' }, '<M-d>', '<C-d>', { desc = 'half page down' })
+
 vim.keymap.set('i', 'jk', '<Esc>')  -- jk to escape insert mode

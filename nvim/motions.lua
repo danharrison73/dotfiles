@@ -59,6 +59,9 @@ local sample = "choose(alpha, beta, gamma, delta)"   -- targets: ( ) , , words
 --    {count}j / {count}k   jump N lines (5j = down 5) — pair with relativenumber
 --    {  }    previous / next blank-line paragraph  (great for code blocks)
 --    Ctrl-d  half page down         Ctrl-u  half page up   (keeps context)
+--    M-d     same as Ctrl-d          M-u     same as Ctrl-u
+--            -- M-u/M-d also scroll tmux copy mode and the claude TUI, so
+--            one pair of keys scrolls every pane whatever is running in it
 --    Ctrl-f  full page forward      Ctrl-b  full page back
 --    H M L   jump to the top / middle / bottom of the VISIBLE screen
 --    zz zt zb  scroll current line to center / top / bottom (reframe, don't move)
@@ -272,6 +275,8 @@ local edit_me = "build(one, two, three)"
 --
 --  CORE  (no plugin)
 --    jk           (insert mode) escape to normal mode — the one you added
+--    M-u / M-d    half page up / down, aliasing C-u/C-d so the same keys
+--                 scroll nvim, tmux copy mode and claude
 --
 --  See tutorial.lua for a guided, hands-on tour of these plugins.
 
@@ -285,7 +290,7 @@ local edit_me = "build(one, two, three)"
 --    /  n        search, next match           *   search word under cursor
 --    gg  G       top / bottom of file         {count}G  absolute line
 --    {  }        paragraph up / down
---    Ctrl-d/u    half page down / up
+--    Ctrl-d/u    half page down / up   (M-d/M-u do the same, everywhere)
 --    H  M  L     screen top / middle / bottom
 --    zz          recenter the screen
 --    `` Ctrl-o   back to previous spot / jump history
