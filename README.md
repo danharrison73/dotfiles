@@ -33,7 +33,8 @@ The primary interactive shell. Ported from the old `.bashrc`:
 ### nvim (`nvim/`)
 - **lazy.nvim** self-bootstraps on first launch; `lazy-lock.json` pins plugin versions so every machine installs the same commits.
 - **harpoon** — `<leader>a` add, `<leader>h` menu, `<leader>1..4` jump.
-- **telescope** — `<leader>ff` files, `<leader>fg` grep, `<leader>fb` buffers, `<leader>fh` help.
+- **telescope** — `<leader>ff` files, `<leader>fg` grep, `<leader>fb` buffers, `<leader>fh` help, `<leader>fe` file browser.
+  - [telescope-ui-select](https://github.com/nvim-telescope/telescope-ui-select.nvim) routes `vim.ui.select()` through telescope, so *every* menu nvim raises is a fuzzy-filterable dropdown instead of a numbered `inputlist` in the command area — LSP code actions (`<leader>ca`), the Makefile target pickers (`<leader>mm`, `<leader>dM`), and anything added later, since they all go through the same hook.
 - **LSP** — [mason.nvim](https://github.com/williamboman/mason.nvim) installs language servers, wired to `nvim-lspconfig` via `mason-lspconfig`. `lua_ls` is auto-installed; add more via `ensure_installed` or `:Mason`. Requires nvim 0.11+ (uses the `vim.lsp.config`/`vim.lsp.enable` API).
   - Keymaps (buffer-local, on attach): `gd` definition and `gr` references (routed through telescope for preview + fuzzy filter), `K` hover, `<leader>rn` rename, `<leader>ca` code action, `[d`/`]d` prev/next diagnostic (floats the message on jump).
 - **Autocompletion** — [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) with LSP, buffer, and path sources, plus LuaSnip for snippets. `<Tab>`/`<S-Tab>` cycle items and jump snippets, `<CR>` confirms, `<C-Space>` triggers completion, `<C-f>`/`<C-b>` scroll docs.

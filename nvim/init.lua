@@ -43,6 +43,15 @@ require('lazy').setup({
     'nvim-telescope/telescope-file-browser.nvim',
     dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' }
   },
+  -- Routes vim.ui.select() through telescope. That hook is what nvim asks
+  -- whenever *anything* needs a choice made -- LSP code actions, the Makefile
+  -- target picker below -- and its built-in implementation is a numbered
+  -- inputlist in the command area with no filtering. One extension upgrades
+  -- every caller at once, including ones added later.
+  {
+    'nvim-telescope/telescope-ui-select.nvim',
+    dependencies = { 'nvim-telescope/telescope.nvim' }
+  },
   -- Sidebar file tree with expandable directories, VS Code style. Complements
   -- telescope rather than replacing it: telescope finds a file you can name,
   -- neo-tree shows you the shape of a directory you can't.
@@ -136,6 +145,16 @@ vim.keymap.set('n', '<leader>fg', telescope.live_grep)
 vim.keymap.set('n', '<leader>fb', telescope.buffers)
 vim.keymap.set('n', '<leader>fh', telescope.help_tags)
 -- File browser: an extension, not a builtin, so it loads and is called separately.
+-- setup() before load_extension(): the extension reads its config out of this
+-- table when it loads, so the order is not cosmetic. The dropdown theme suits a
+-- short list of named choices -- centred, no preview pane, which a list of code
+-- actions or make targets has nothing to fill.
+require('telescope').setup({
+  extensions = {
+    ['ui-select'] = { require('telescope.themes').get_dropdown() },
+  },
+})
+require('telescope').load_extension('ui-select')
 require('telescope').load_extension('file_browser')
 vim.keymap.set('n', '<leader>fe', function()
   require('telescope').extensions.file_browser.file_browser({ path = '%:p:h' })

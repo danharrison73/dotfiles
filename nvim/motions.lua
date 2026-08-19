@@ -137,6 +137,11 @@ local edit_me = "build(one, two, three)"
 --    <leader>fe   file browser, opened at the current file's directory
 --                 (telescope-file-browser.nvim; also creates/renames/deletes)
 --
+--    telescope-ui-select.nvim also routes vim.ui.select() here, so every menu
+--    nvim raises is a telescope dropdown you can fuzzy-filter rather than a
+--    numbered list you read: <leader>ca code actions, <leader>mm / <leader>dM
+--    make targets. Type to narrow, <CR> to pick, <Esc> to back out.
+--
 --  NEO-TREE  (nvim-neo-tree/neo-tree.nvim) — the sidebar tree, for browsing
 --  structure rather than jumping to a file you can already name.
 --    <leader>e    toggle the sidebar, revealing the current file in the tree
