@@ -71,6 +71,12 @@ The primary interactive shell. Ported from the old `.bashrc`:
 ### wezterm (`wezterm/.wezterm.lua`)
 - JetBrains Mono, rose-pine-moon, acrylic-blurred transparent window.
 - Bottom tab bar, blinking bar cursor, 10k scrollback.
+- **Dictating into a terminal (Wispr Flow)** — use `Shift+Alt+X` (copy last transcript) then `Ctrl+Shift+V`. Flow's automatic insert does not work here, and neither does its one-key `Shift+Alt+Z`. Measured, rather than guessed:
+  - Flow puts the transcript on the clipboard and **restores the previous contents 455ms later** (clipboard polled at 60ms: set at `18:31:58.171`, reverted at `18:31:58.626`). Anything that reads the clipboard slower than that gets stale text — which is what Claude Code does, since inside WSL it reads through WSLg's clipboard bridge.
+  - Capturing the tty with `cat -v` during a dictation caught **zero bytes**, while manual typing in the same capture came through fine. So Flow's insert reaches the terminal in no form at all — no characters, no `^V`, no `Shift+Insert`. It inserts through a Windows text-control API, and a GPU-rendered terminal is not an edit control.
+  - `Shift+Alt+X` sidesteps both: the clipboard is set permanently, and `Ctrl+Shift+V` is WezTerm's own paste, executed in the Windows process that owns the clipboard. Claude never sees the keystroke, so `chat:imagePaste` (bound to `ctrl+v`) can't swallow it either.
+  - Do **not** rebind `Ctrl+V` to paste in WezTerm to make Flow's auto-paste work — it would swallow `<C-v>`, nvim's blockwise visual mode.
+  - Claude Code's own `/voice` avoids all of this: it records inside WSL via SoX/PulseAudio, with no Windows text injection in the path.
 - `Shift+PageUp`/`Shift+PageDown` are forwarded rather than scrolling WezTerm's own scrollback — with tmux running that buffer holds stale repainted frames, not session output, so the keys belong to tmux's copy mode.
 - Boots straight into WSL + a tmux session named `main`.
 - WezTerm runs on Windows and can't follow WSL symlinks, so `install.sh` writes a
