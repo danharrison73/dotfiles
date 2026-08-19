@@ -12,6 +12,15 @@
         "alt+g": "scroll:top",
         "alt+shift+g": "scroll:bottom"
       }
+    },
+    {
+      "context": "Chat",
+      "bindings": {
+        "up": null,
+        "down": null,
+        "ctrl+p": "history:previous",
+        "ctrl+n": "history:next"
+      }
     }
   ]
 }
