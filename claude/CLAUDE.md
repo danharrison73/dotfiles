@@ -36,6 +36,14 @@ means.**
 
 - Gloss every symbol **at first use**, in half a line, inline with the maths. Once
   each — don't re-define it later in the same reply.
+- **Before sending, read back every equation and account for every symbol in it,
+  one by one.** Not "did I write some definitions" — did I define *each* of them.
+  A partially-glossed equation is worse than an unglossed one: defining three of
+  four symbols signals the fourth was too obvious to mention, so I won't ask.
+- **The left-hand side counts.** The quantity being defined or solved for is the
+  one most often skipped and usually the one I most need — I can often infer an
+  input from context, never the output. "fᵢ = qᵢ − R(S)/Bᵢ, where qᵢ is … and Bᵢ
+  is …" is a failure if it never says what fᵢ is.
 - **"Once each" is per reply, not per conversation.** Every reply stands on its own:
   if an equation carries a symbol I was told about ten messages ago, gloss it again.
   Never assume a definition from earlier in the conversation is still loaded.
