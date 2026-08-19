@@ -185,6 +185,83 @@ local edit_me = "build(one, two, three)"
 --    <CR>         confirm the highlighted item
 --    <C-f> / <C-b>     scroll the docs popup down / up
 --
+--  DEBUGGER  (mfussenegger/nvim-dap + rcarriga/nvim-dap-ui; the debugpy
+--             adapter is installed by jay-babu/mason-nvim-dap.nvim, and the
+--             python configurations come from mfussenegger/nvim-dap-python)
+--
+--  Same protocol and same adapter VS Code uses, so behaviour is identical --
+--  what dap-ui adds is the windows. Two ways in:
+--    <F5>         pick a configuration. In a project with .vscode/launch.json,
+--                 that file's configurations are in the list automatically --
+--                 nvim-dap reads it on demand, so VS Code's Run-and-Debug
+--                 dropdown and this picker are literally the same list.
+--    <leader>dM   pick a Makefile target instead (see Running, below).
+--  Either way, put the cursor on a line and <leader>db first.
+--
+--  launch.json caveat: nvim's JSON parser is stricter than VS Code's. Trailing
+--  commas, and `//` comments sharing a line with code, make the whole file
+--  unparseable and nvim-dap silently falls back to the generic configs. Put
+--  comments on their own line and drop the trailing commas.
+--
+--    F-keys, exactly VS Code's:
+--      <F5>       start a session / resume from a stop
+--      <F10>      step over          <F11>   step into
+--      <S-F11>    step out           <F12>   step out (fallback binding)
+--
+--    Breakpoints:
+--      <leader>db   toggle a breakpoint on this line
+--      <leader>dB   conditional -- prompts for a python expression (`i == 4721`)
+--      <leader>dp   logpoint -- prints to the repl and never stops; `{}`
+--                   interpolates, so `row {i} = {row}`. A print statement that
+--                   isn't in the file and can't be committed by accident.
+--      <leader>dx   clear every breakpoint
+--
+--    Running:
+--      <leader>dM   pick a Makefile target, run it with DEBUG=1 in a terminal
+--                   split, and attach automatically -- the whole IDE "Run"
+--                   button, but parameterised by the Makefile rather than by a
+--                   second copy of the arguments. Prompts for extra make vars
+--                   (`BOOTSTRAPS=5 CONFIDENCE=0.8`). Set breakpoints FIRST:
+--                   --wait-for-client releases the moment nvim attaches.
+--      <leader>dc   continue (same as <F5>)
+--      <leader>dC   run to the cursor -- one-shot breakpoint here, then resume
+--      <leader>dl   re-run the last configuration, skipping the picker
+--      <leader>dm   debug the test method the cursor is inside (pytest/unittest)
+--      <leader>dt   terminate the session -- a HARD kill of the process, not a
+--                   Ctrl-C, so no KeyboardInterrupt and no `finally` blocks. To
+--                   let a run wind down cleanly, Ctrl-C its terminal split
+--                   instead; to stop debugging but let it finish, use
+--                   :lua require('dap').disconnect({terminateDebuggee = false})
+--      <leader>dq   tidy up: terminate if still running, then close the panes,
+--                   the repl, and the <leader>dM terminal split. The dap-ui
+--                   panes close on their own when a session ends -- this is for
+--                   the terminal split, which is kept on purpose so the run's
+--                   output outlives the session. Also as :DebugCleanup, and it
+--                   reports how many splits it closed rather than failing quiet.
+--
+--    Inspecting:
+--      <leader>du   toggle the dap-ui panes (scopes / breakpoints / stacks /
+--                   watches on the left, repl in the drawer below)
+--      <leader>de   evaluate -- the word under the cursor in normal mode, or
+--                   the SELECTION in visual mode, so you can highlight
+--                   `self.cache[key]` and ask for exactly that
+--      <leader>dr   toggle the repl -- a real python prompt inside the stopped
+--                   frame, where every local is already in scope
+--
+--    Values also appear inline at end-of-line as you step (dap-virtual-text),
+--    which is usually enough that you never open the scopes pane.
+--
+--    Which venv runs your code: $VIRTUAL_ENV if one is active, else
+--    $CONDA_PREFIX, else the first venv/.venv/env/.env directory in the cwd or
+--    an LSP root. If none of those exist the session starts against mason's own
+--    debugpy venv and dies on the first project import -- so activate the venv,
+--    or keep a .venv in the project root. debugpy itself does NOT need to be
+--    installed there; the adapter injects its own copy.
+--
+--    The run picker <F5> shows: `file` (this buffer), `file:args` (prompts for
+--    argv), `file:libs` (same, but steps into library code), `module`
+--    (python -m …), `attach`, `file:doctest`.
+--
 --  CORE  (no plugin)
 --    jk           (insert mode) escape to normal mode — the one you added
 --
