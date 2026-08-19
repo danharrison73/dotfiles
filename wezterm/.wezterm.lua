@@ -27,6 +27,19 @@ config.color_scheme = 'rose-pine-moon'
 config.default_cursor_style = 'BlinkingBar'
 config.cursor_blink_rate = 500
 
+-- IME on. Not for input methods as such -- it changes which Windows text path
+-- WezTerm accepts. Dictation tools and text expanders (Wispr Flow) inject text
+-- as synthesised character input rather than keystrokes; measured, Flow's output
+-- arrives in Windows Terminal as plain literal characters and in WezTerm as
+-- nothing at all. WezTerm reads the keyboard through the raw-input path, where
+-- posted WM_CHAR messages never appear; the IME path is the other way in.
+-- This is the setting that fixed it. Note it takes effect at window creation:
+-- WezTerm hot-reloads most config, but not this, and the reload watch on the
+-- \\wsl.localhost path is unreliable anyway (Windows change notifications do not
+-- travel over that redirector) -- so RESTART WezTerm after editing this file,
+-- rather than trusting a reload that may never have happened.
+config.use_ime = true
+
 -- Scrollback
 config.scrollback_lines = 10000
 
@@ -37,6 +50,15 @@ config.scrollback_lines = 10000
 config.keys = {
   { key = 'PageUp',   mods = 'SHIFT', action = wezterm.action.SendKey { key = 'PageUp',   mods = 'SHIFT' } },
   { key = 'PageDown', mods = 'SHIFT', action = wezterm.action.SendKey { key = 'PageDown', mods = 'SHIFT' } },
+
+  -- Ctrl+V pastes. WezTerm binds Ctrl+SHIFT+V by default and leaves plain
+  -- unshifted Ctrl+V to pass through to the program -- where Claude Code takes
+  -- it as chat:imagePaste and searches the clipboard for an IMAGE, so an
+  -- ordinary text paste silently does nothing. Windows Terminal binds Ctrl+V to
+  -- paste, which is why pasting behaves normally there and not here.
+  -- COST: nvim no longer receives <C-v>. Press <C-q> for blockwise visual --
+  -- vim aliases the two, so it is the same command, not a lesser one.
+  { key = 'v', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
 }
 
 return config

@@ -275,6 +275,9 @@ local edit_me = "build(one, two, three)"
 --
 --  CORE  (no plugin)
 --    jk           (insert mode) escape to normal mode — the one you added
+--    <C-q>        BLOCKWISE visual. WezTerm takes <C-v> for paste, so it never
+--                 reaches nvim; vim aliases <C-q> to <C-v>, so this is the very
+--                 same command.
 --    M-u / M-d    half page up / down, aliasing C-u/C-d so the same keys
 --                 scroll nvim, tmux copy mode and claude
 --

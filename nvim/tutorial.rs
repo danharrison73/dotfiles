@@ -367,6 +367,8 @@ fn limits() {
 //
 //    v        charwise visual      V    LINEwise visual
 //    <C-v>    BLOCKWISE visual — a rectangle. This is the superpower.
+//             Press <C-q> here — WezTerm takes <C-v> for paste. vim aliases the
+//             two, so read every <C-v> below as <C-q>.
 //    gv       reselect whatever you had selected last
 //    o        jump to the other end of the selection (extend the other way)
 //
