@@ -58,7 +58,9 @@ The primary interactive shell. Ported from the old `.bashrc`:
 
 ### tmux (`tmux/.tmux.conf`)
 - Prefix rebound to `C-Space`; mouse on; windows/panes start at 1 and renumber.
-- Split with `|` / `-`, navigate/resize panes with `h/j/k/l`, reload with `prefix r`.
+- Split with `|` / `-`, resize with `prefix H/J/K/L`, reload with `prefix r`.
+- **Pane hopping, zoom-preserving** — `M-h/j/k/l` (or `M-<arrow>`) moves between panes with no prefix at all, and `M-1`…`M-5` jumps straight to a pane by number *and zooms it*. `M-z` toggles zoom. Every move uses `select-pane -Z`, which "keeps the window zoomed if it was zoomed" — so once you're full screen you stay full screen while moving around, instead of dropping back to the split layout and having to zoom again. `prefix h/j/k/l` still works and is zoom-preserving too.
+  - `bind -n` takes those keys from whatever runs inside the pane, so zsh loses `M-h` (`run-help`) and `M-l` (`down-case-word`). The `M-<arrow>` aliases exist for that reason. nvim is unaffected — it uses `<C-w>` for its own splits.
 - Tokyo Night status bar; true colour; 10ms escape-time to avoid WezTerm garbage.
 
 ### wezterm (`wezterm/.wezterm.lua`)
