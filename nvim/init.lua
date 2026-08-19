@@ -612,6 +612,9 @@ vim.opt.laststatus = 2
 vim.opt.autowrite = true
 vim.opt.cursorline = true
 vim.opt.autoread = true
+-- CursorHold's delay, and so how long an idle nvim waits before noticing a file
+-- changed underneath it. The 4s default is too long to feel automatic.
+vim.opt.updatetime = 250
 vim.opt.swapfile = false
 vim.opt.termguicolors = true
 
@@ -634,6 +637,34 @@ vim.api.nvim_create_autocmd('FileType', {
   callback = function()
     vim.opt_local.tabstop = 4
     vim.opt_local.shiftwidth = 4
+  end,
+})
+
+-- Reload buffers edited outside nvim -- by claude in another tmux pane, by a
+-- git checkout, by a formatter. `autoread` above only re-reads on nvim's own
+-- schedule, which is to say when something happens to prompt it; :checktime is
+-- the prompt. FocusGained needs `set -g focus-events on` in tmux/.tmux.conf to
+-- ever fire, so the two halves of this live in different files.
+-- vim.schedule is load-bearing, not tidiness: :checktime called straight from an
+-- autocmd callback is silently ignored -- it returns without error and without
+-- reloading, because the callback runs under textlock. Deferring it to the next
+-- event-loop tick is what makes it actually run.
+-- The mode() guard keeps it off the command line, where :checktime is an error.
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermLeave' }, {
+  callback = function()
+    if vim.fn.mode() ~= 'c' and vim.bo.buftype == '' then
+      vim.schedule(function() vim.cmd('checktime') end)
+    end
+  end,
+  desc = 'reload buffers changed on disk',
+})
+
+-- Say when it happens. A buffer silently changing under the cursor is worse
+-- than a stale one: you need to know the undo history you are looking at is a
+-- different file's.
+vim.api.nvim_create_autocmd('FileChangedShellPost', {
+  callback = function()
+    vim.notify('Buffer reloaded from disk', vim.log.levels.WARN)
   end,
 })
 
