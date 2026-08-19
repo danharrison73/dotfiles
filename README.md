@@ -60,7 +60,8 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - Prefix rebound to `C-Space`; mouse on; windows/panes start at 1 and renumber.
 - Split with `|` / `-`, resize with `prefix H/J/K/L`, reload with `prefix r`.
 - **Pane hopping, zoom-preserving** — `M-h/j/k/l` (or `M-<arrow>`) moves between panes with no prefix at all, and `M-1`…`M-5` jumps straight to a pane by number *and zooms it*. `M-z` toggles zoom. Every move uses `select-pane -Z`, which "keeps the window zoomed if it was zoomed" — so once you're full screen you stay full screen while moving around, instead of dropping back to the split layout and having to zoom again. `prefix h/j/k/l` still works and is zoom-preserving too.
-  - `bind -n` takes those keys from whatever runs inside the pane, so zsh loses `M-h` (`run-help`) and `M-l` (`down-case-word`). The `M-<arrow>` aliases exist for that reason. nvim is unaffected — it uses `<C-w>` for its own splits.
+  - `bind -n` takes those keys from whatever runs inside the pane. Checked against this setup: zsh is in vi mode, where the only Alt bindings are `M-,` `M-/` `M-c` `M-~`, so none of these collide; nvim uses `<C-w>` for its own splits and is unaffected.
+- **Windows for anything long-lived** — `M-H`/`M-L` move between windows, `prefix ;` is last-window. Programs drawing into the terminal's *normal* buffer (a shell, claude) don't re-anchor their output when the pane changes size, so zooming or splitting leaves them mispositioned and you end up scrolling to find the content. Full-screen programs on the *alternate* buffer (nvim, less, htop) redraw on resize and never show this. A window is always the full terminal size, so switching windows resizes nothing — put claude and long-running jobs in their own window and the problem disappears; keep panes for short-lived shells you want side by side.
 - Tokyo Night status bar; true colour; 10ms escape-time to avoid WezTerm garbage.
 
 ### wezterm (`wezterm/.wezterm.lua`)
