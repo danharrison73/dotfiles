@@ -62,11 +62,14 @@ The primary interactive shell. Ported from the old `.bashrc`:
 - **Pane hopping, zoom-preserving** — `M-h/j/k/l` (or `M-<arrow>`) moves between panes with no prefix at all, and `M-1`…`M-5` jumps straight to a pane by number *and zooms it*. `M-z` toggles zoom. Every move uses `select-pane -Z`, which "keeps the window zoomed if it was zoomed" — so once you're full screen you stay full screen while moving around, instead of dropping back to the split layout and having to zoom again. `prefix h/j/k/l` still works and is zoom-preserving too.
   - `bind -n` takes those keys from whatever runs inside the pane. Checked against this setup: zsh is in vi mode, where the only Alt bindings are `M-,` `M-/` `M-c` `M-~`, so none of these collide; nvim uses `<C-w>` for its own splits and is unaffected.
 - **Windows for anything long-lived** — `M-H`/`M-L` move between windows, `prefix ;` is last-window. Programs drawing into the terminal's *normal* buffer (a shell, claude) don't re-anchor their output when the pane changes size, so zooming or splitting leaves them mispositioned and you end up scrolling to find the content. Full-screen programs on the *alternate* buffer (nvim, less, htop) redraw on resize and never show this. A window is always the full terminal size, so switching windows resizes nothing — put claude and long-running jobs in their own window and the problem disappears; keep panes for short-lived shells you want side by side.
+- **Scrolling without the mouse** — `Shift+PageUp` drops into copy mode already scrolled up a page; `Shift+PageDown` (or plain `PageUp`/`PageDown`) pages from there, and it's vim inside: `k`/`j`, `C-u`/`C-d`, `C-b`/`C-f`, `g`/`G` for the ends of the history, `/` to search with `n`/`N`, `q` to leave. `prefix [` is the long way in. This works identically in a shell and inside a full TUI like the Claude CLI, because tmux consumes the key and owns the scrollback — the program never sees it. `mode-keys` is set to `vi` explicitly rather than left to tmux's inference from `$EDITOR`.
+  - Selection inside copy mode keeps tmux's defaults, which differ from vim: `Space` starts a selection (`v` is block-select), `Enter` copies and exits.
 - Tokyo Night status bar; true colour; 10ms escape-time to avoid WezTerm garbage.
 
 ### wezterm (`wezterm/.wezterm.lua`)
 - JetBrains Mono, rose-pine-moon, acrylic-blurred transparent window.
 - Bottom tab bar, blinking bar cursor, 10k scrollback.
+- `Shift+PageUp`/`Shift+PageDown` are forwarded rather than scrolling WezTerm's own scrollback — with tmux running that buffer holds stale repainted frames, not session output, so the keys belong to tmux's copy mode.
 - Boots straight into WSL + a tmux session named `main`.
 - WezTerm runs on Windows and can't follow WSL symlinks, so `install.sh` writes a
   tiny Windows-side stub that live-loads this file over the `\\wsl.localhost` path

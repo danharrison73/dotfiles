@@ -30,4 +30,13 @@ config.cursor_blink_rate = 500
 -- Scrollback
 config.scrollback_lines = 10000
 
+-- Shift+PageUp/PageDown are WezTerm defaults for scrolling ITS scrollback, which
+-- is the wrong buffer: tmux repaints the whole screen every frame, so WezTerm's
+-- history is a stack of stale frames, not the session's output. Forward the keys
+-- instead and let tmux's copy mode handle them (see tmux/.tmux.conf).
+config.keys = {
+  { key = 'PageUp',   mods = 'SHIFT', action = wezterm.action.SendKey { key = 'PageUp',   mods = 'SHIFT' } },
+  { key = 'PageDown', mods = 'SHIFT', action = wezterm.action.SendKey { key = 'PageDown', mods = 'SHIFT' } },
+}
+
 return config
