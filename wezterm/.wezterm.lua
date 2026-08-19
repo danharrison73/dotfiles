@@ -37,17 +37,6 @@ config.scrollback_lines = 10000
 config.keys = {
   { key = 'PageUp',   mods = 'SHIFT', action = wezterm.action.SendKey { key = 'PageUp',   mods = 'SHIFT' } },
   { key = 'PageDown', mods = 'SHIFT', action = wezterm.action.SendKey { key = 'PageDown', mods = 'SHIFT' } },
-
-  -- Ctrl+V pastes. WezTerm's own paste is Ctrl+Shift+V and plain Ctrl+V is
-  -- unbound, so it passes through to the running program -- where Claude Code
-  -- reads it as chat:imagePaste and hunts the clipboard for an IMAGE. Dictation
-  -- tools (Wispr Flow) insert their text by putting it on the clipboard and
-  -- sending Ctrl+V, so the text was never arriving as text.
-  -- Handling it here makes WezTerm do the paste itself, as bracketed paste,
-  -- from the authoritative Windows clipboard -- no round trip through WSLg's
-  -- clipboard bridge, which is what made the content stale. Claude never sees
-  -- the keystroke; alt+v still reaches it for genuine image pastes.
-  { key = 'v', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
 }
 
 return config
