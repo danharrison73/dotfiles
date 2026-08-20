@@ -466,7 +466,26 @@ end)
 vim.keymap.set('n', '<leader>dx', dap.clear_breakpoints)
 vim.keymap.set('n', '<leader>dc', dap.continue)
 vim.keymap.set('n', '<leader>dC', dap.run_to_cursor) -- one-shot breakpoint here, then resume
-vim.keymap.set('n', '<leader>dl', dap.run_last)      -- rerun the last configuration, skipping the picker
+vim.keymap.set('n', '<leader>dR', dap.run_last)      -- rerun the last configuration, skipping the picker
+
+-- Stepping on hjkl, reading the directions as movement through the call stack
+-- rather than across the screen: l goes IN (deeper, one frame down), h comes
+-- back OUT to the caller, j moves ON to the next line at this level. The F-keys
+-- above still work -- these are an alias, not a replacement.
+--
+-- Deliberately behind <leader> rather than bare h/j/k/l while stopped. Plain
+-- motions are needed constantly at a breakpoint: to reach a line for
+-- <leader>dC, to select an expression for <leader>de, or just to read the code
+-- around the stop. Shadowing them would cost more than it saves.
+vim.keymap.set('n', '<leader>dl', dap.step_into)
+vim.keymap.set('n', '<leader>dh', dap.step_out)
+vim.keymap.set('n', '<leader>dj', dap.step_over)
+
+-- K and J move the VIEW up and down the stack without executing anything:
+-- the frame you're inspecting changes, the program does not advance. Scopes and
+-- <leader>de follow the selected frame.
+vim.keymap.set('n', '<leader>dK', function() require('dap').up() end)
+vim.keymap.set('n', '<leader>dJ', function() require('dap').down() end)
 vim.keymap.set('n', '<leader>dt', dap.terminate)
 vim.keymap.set('n', '<leader>du', dapui.toggle)
 vim.keymap.set('n', '<leader>dr', dap.repl.toggle)   -- a real python repl in the stopped frame

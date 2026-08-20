@@ -211,6 +211,15 @@ local edit_me = "build(one, two, three)"
 --  unparseable and nvim-dap silently falls back to the generic configs. Put
 --  comments on their own line and drop the trailing commas.
 --
+--    hjkl, read as movement through the CALL STACK rather than the screen:
+--      <leader>dl   step INTO  — one frame deeper (l = inwards)
+--      <leader>dh   step OUT   — back to the caller (h = outwards)
+--      <leader>dj   step OVER  — on to the next line at this level
+--      <leader>dK   move the VIEW up one frame   — inspect the caller
+--      <leader>dJ   move the VIEW down one frame — nothing executes for these
+--                   two; the frame you're looking at changes, the program
+--                   does not advance. Scopes and <leader>de follow it.
+--
 --    F-keys, exactly VS Code's:
 --      <F5>       start a session / resume from a stop
 --      <F10>      step over          <F11>   step into
@@ -236,7 +245,7 @@ local edit_me = "build(one, two, three)"
 --                   --wait-for-client releases the moment nvim attaches.
 --      <leader>dc   continue (same as <F5>)
 --      <leader>dC   run to the cursor -- one-shot breakpoint here, then resume
---      <leader>dl   re-run the last configuration, skipping the picker
+--      <leader>dR   re-run the last configuration, skipping the picker
 --      <leader>dm   debug the test method the cursor is inside (pytest/unittest)
 --      <leader>dt   terminate the session -- a HARD kill of the process, not a
 --                   Ctrl-C, so no KeyboardInterrupt and no `finally` blocks. To
