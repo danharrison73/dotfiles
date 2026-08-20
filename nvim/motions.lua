@@ -315,7 +315,9 @@ local edit_me = "build(one, two, three)"
 --    M-u / M-d    half page up / down, aliasing C-u/C-d so the same keys
 --                 scroll nvim, tmux copy mode and claude
 --
---  See tutorial.rs for a guided, hands-on tour of these plugins.
+--  See tutorial.rs for a guided, hands-on tour of these plugins, and
+--  drills.py for the speed course -- the same material as timed drills
+--  with pass marks, rather than explanation.
 
 
 -- ----------------------------------------------------------------------------

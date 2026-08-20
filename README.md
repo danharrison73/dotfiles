@@ -57,6 +57,8 @@ The primary interactive shell. Ported from the old `.bashrc`:
   - Order is deliberate — grammar before plugins: motions → **text objects** → `.` → counts → insert → registers → visual/blockwise → macros → `:s`/`:g` → marks → telescope → harpoon → LSP → cmp. Tiers 1-4 are where the speed actually lives; plugins add capability but don't compound the way `ciw` does.
   - It also explains *how to think* in vim (vim is a language, not a set of shortcuts) and how the rest of these dotfiles feed the editing loop.
   - The LSP section needs `rust-analyzer` (`:Mason`, press `i` on it); `lua_ls` is the only server auto-installed.
+- **`drills.py`** — the speed course. Where `tutorial.rs` explains and `motions.lua` reference, this is nine sessions of *drills with pass marks*: land on any character in ≤2 keys, change any argument from anywhere inside it, rename with `cgn` + `.` without typing the word twice, comment a ragged block with `<C-q>`, turn raw rows into dicts with one recorded macro. Ten minutes a day, one session, repeated until the pass mark is dull rather than possible. Ends with a graduation checklist. Practice material is Python, since that's what the working day is.
+  - Its three rules matter more than any key in it: never press `hjkl` twice in a row; let the *distance* to the target pick the tool (`f`/`t` on the line, `s` on screen, `/` or a count in the file, telescope between files); and count keystrokes, because speed is pressing fewer keys rather than typing faster.
 - `motions.lua` is the companion cheat-sheet for getting around a file.
 
 ### tmux (`tmux/.tmux.conf`)
