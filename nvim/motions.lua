@@ -15,7 +15,7 @@
 --  TIP: counted jumps like `5j` are aimed by READING the gutter, never by
 --  counting rows. init.lua sets hybrid line numbers (number + relativenumber),
 --  so the cursor line shows its absolute number and every other line shows how
---  far away it is — the number you type. `:Drill counts` drills exactly this.
+--  far away it is — the number you type.
 -- ============================================================================
 
 
@@ -72,6 +72,27 @@ local sample = "choose(alpha, beta, gamma, delta)"   -- targets: ( ) , , words
 --    * press `L` to drop to the bottom of the screen, `H` for the top, `M` mid
 --    * press `Ctrl-d`, then `zz` to recenter what you land on
 
+
+-- ----------------------------------------------------------------------------
+--  3b. FLASH — jump to anywhere you can SEE, by naming it
+-- ----------------------------------------------------------------------------
+--  `s` then the first two characters of the target. Every match on screen gets
+--  a label; press the label and you are there. Works forwards and backwards,
+--  across the whole window, in one motion.
+--
+--  This covers the range f/t cannot (not on this line) and `/` handles clumsily
+--  (you have to make the pattern unique, then n-n-n to the right hit). If you
+--  are ever holding j or k to reach something you can already see, this is the
+--  key you wanted.
+--
+--  It is also an OPERATOR target: `ds{ch}{ch}` deletes from here to the label,
+--  `ys..` yanks to it, and in visual mode `s..` extends the selection there.
+--
+--  TRY IT: from the top of this file, `s` then `de` and jump to a `delta` far
+--  below. Then `d` `s` and a label to delete everything between.
+--
+--  `s` shadows the built-in substitute-character; `cl` does the same job.
+--  Inside neo-tree, `s` still opens a vsplit — its mapping is buffer-local.
 
 -- ----------------------------------------------------------------------------
 --  4. SEARCH — teleport to anything by name
@@ -300,6 +321,7 @@ local edit_me = "build(one, two, three)"
 -- ----------------------------------------------------------------------------
 --  CHEAT SHEET — the 12 that matter most
 -- ----------------------------------------------------------------------------
+--    s{c}{c}     jump to any label on screen (flash) — the anti-hjkl key
 --    f{c} ;      jump onto a char on the line, repeat
 --    w  b  e     word forward / back / end
 --    0  ^  $     line start / first word / end

@@ -43,6 +43,14 @@ require('lazy').setup({
     'nvim-telescope/telescope-file-browser.nvim',
     dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' }
   },
+  -- Jump anywhere on screen by naming it. Type `s` then two characters and every
+  -- match gets a label; press the label to teleport. This is the tool for the
+  -- range between "on this line" (f/t) and "somewhere in the project"
+  -- (telescope) -- which is exactly where hjkl-mashing happens.
+  {
+    'folke/flash.nvim',
+    event = 'VeryLazy',
+  },
   -- Routes vim.ui.select() through telescope. That hook is what nvim asks
   -- whenever *anything* needs a choice made -- LSP code actions, the Makefile
   -- target picker below -- and its built-in implementation is a numbered
@@ -159,6 +167,15 @@ require('telescope').load_extension('file_browser')
 vim.keymap.set('n', '<leader>fe', function()
   require('telescope').extensions.file_browser.file_browser({ path = '%:p:h' })
 end)
+
+-- Flash. `s` in normal/visual/operator-pending is the jump; it shadows the
+-- built-in `s` (substitute character), which is no loss -- `cl` is the same
+-- thing and one key longer. `S` stays as-is: flash's treesitter jump is not
+-- worth losing `cc`'s shorthand for. Neo-tree's own `s` (open in vsplit) is
+-- buffer-local and so still wins inside the tree.
+require('flash').setup()
+vim.keymap.set({ 'n', 'x', 'o' }, 's', function() require('flash').jump() end, { desc = 'flash jump' })
+vim.keymap.set({ 'o', 'x' }, 'R', function() require('flash').treesitter_search() end, { desc = 'flash treesitter search' })
 
 -- Neo-tree. `reveal` opens the sidebar with the current file already selected
 -- and its parent directories expanded, so <leader>e always answers "where am I".
