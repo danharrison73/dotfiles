@@ -87,11 +87,19 @@ RESULT = validate(CONFIG, cutoff="2026-05-06", n_days_train=826, bootstraps=100)
 #  make an edit repeatable is to make it a single change: prefer ciw over
 #  "move, delete, insert".
 #
-#  DRILL A. Cursor on the first `lambda_reg`. Press * (search this word), then
-#           cgn and type `l2_penalty`, <Esc>. Now press . four times.
-#           cgn = "change the next match" -- the repeatable rename.
-#  DRILL B. Same thing the older way: * then ciw, retype, <Esc>, then n. n. n.
-#  DRILL C. Undo it all with u, then redo with <C-r>, and notice `.` survives.
+#  DRILL A. THE SPECIALIST. Cursor on the first `lambda_reg`. Press * (search
+#           this word), then cgn and type `l2_penalty`, <Esc>. Now press . four
+#           times. cgn = "change the next match", so `.` finds the next one
+#           itself: one keypress per rename. Fewest keys when you want them all.
+#  DRILL B. THE GENERAL CASE, and the more important habit. * then ciw, retype,
+#           <Esc>, then n. n. n. Two keys per site instead of one -- but `n` and
+#           `.` are separate, so `n n .` SKIPS an occurrence you don't want to
+#           touch. And `.` is not tied to a search at all: it repeats any change
+#           anywhere, which is the reflex that pays off everywhere else.
+#           Not a legacy alternative to A. A is the special case of this.
+#  DRILL C. Do B again, deliberately skipping the occurrence inside `scaled`.
+#           A cannot express that; this is the whole reason to know both.
+#  DRILL D. Undo it all with u, then redo with <C-r>, and notice `.` survives.
 
 def fit(lambda_reg):
     penalty = lambda_reg * 2
