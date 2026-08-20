@@ -32,8 +32,18 @@
 #    1. onto the first (          ->  f(
 #    2. onto the matching )       ->  %
 #    3. onto the last comma       ->  $ then F,
-#    4. just before "cutoff"      ->  0 then tc  (t stops BEFORE)
+#    4. just before the =         ->  0 then t=   (t stops BEFORE, f lands ON)
 #    5. third comma from the left ->  0 then 3f,
+#
+#  Pick the target character for RARITY, not for what it belongs to. `t=` works
+#  in one press because = appears once; `tc` would stop at the c in "slice",
+#  since c occurs four times before "cutoff" does. When the character is common,
+#  either repeat with ; (which skips to the next occurrence -- nvim leaves the
+#  `;` flag out of cpoptions, so it does not stall) or use a different key: /cu
+#  names the target instead of counting hops to it.
+#
+#  f/t matter most as OPERATOR targets: dt, deletes up to the comma, df, takes
+#  the comma with it. ct) retypes the rest of a call's arguments.
 #
 #  DRILL B. Overshoot on purpose with f, then recover with , (comma).
 #  DRILL C. Ten times: 0 -> f= -> $ -> ^ . Aim for under four seconds.
