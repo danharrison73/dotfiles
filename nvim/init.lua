@@ -687,8 +687,7 @@ vim.opt.termguicolors = true
 -- scrolling FEELS than any animation setting: with scrolloff at 0 the view only
 -- moves once the cursor hits the very edge, so reading down a file is a series
 -- of lurches. At 8 the window slides continuously and you are never reading the
--- last visible line with the next one hidden. neoscroll's respect_scrolloff is
--- on, so its animations honour it too.
+-- last visible line with the next one hidden.
 vim.opt.scrolloff = 8
 vim.opt.sidescrolloff = 8
 
