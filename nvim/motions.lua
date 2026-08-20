@@ -60,6 +60,7 @@ local sample = "choose(alpha, beta, gamma, delta)"   -- targets: ( ) , , words
 --    {  }    previous / next blank-line paragraph  (great for code blocks)
 --    Ctrl-d  half page down         Ctrl-u  half page up   (keeps context)
 --    M-d     same as Ctrl-d          M-u     same as Ctrl-u
+--            -- all four animate (neoscroll, 100ms); zz/zt/zb do too
 --            -- M-u/M-d also scroll tmux copy mode and the claude TUI, so
 --            one pair of keys scrolls every pane whatever is running in it
 --    Ctrl-f  full page forward      Ctrl-b  full page back
