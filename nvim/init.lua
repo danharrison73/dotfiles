@@ -43,9 +43,6 @@ require('lazy').setup({
     'nvim-telescope/telescope-file-browser.nvim',
     dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' }
   },
-  -- Animated scrolling. Not decoration: a half-page jump relocates your eye,
-  -- an interpolated one lets it track where the text went.
-  { 'karb94/neoscroll.nvim' },
   -- Jump anywhere on screen by naming it. Type `s` then two characters and every
   -- match gets a label; press the label to teleport. This is the tool for the
   -- range between "on this line" (f/t) and "somewhere in the project"
@@ -170,51 +167,6 @@ require('telescope').load_extension('file_browser')
 vim.keymap.set('n', '<leader>fe', function()
   require('telescope').extensions.file_browser.file_browser({ path = '%:p:h' })
 end)
-
--- Neoscroll: animate the scroll instead of teleporting, so the eye can track
--- where the text went rather than relocating after each jump.
---
--- mappings = {} disables its own bindings; every key is defined below so the
--- duration can differ per key. Durations are milliseconds and were chosen by
--- feel: below ~80ms the motion stops reading as motion and is just lag; above
--- ~250ms it reads as waiting. Half-page is the one used constantly, so it gets
--- the shortest. `sine` eases in and out, which reads as smoother than `linear`
--- at the same duration -- the curve matters more than the number.
---
--- M-u/M-d call the helpers DIRECTLY rather than aliasing <C-u>/<C-d>. A
--- vim.keymap.set alias is noremap by default, so it would run the built-in
--- scroll and silently skip the animation.
-require('neoscroll').setup({
-  mappings = {},
-  hide_cursor = true,          -- no cursor smeared across the animation
-  stop_eof = true,             -- don't scroll past the last line
-  respect_scrolloff = true,
-  cursor_scrolls_alone = true,
-  easing = 'sine',
-})
-
-local neoscroll = require('neoscroll')
-local function scroll(fn, ms)
-  return function() neoscroll[fn]({ duration = ms }) end
-end
-for _, m in ipairs({
-  { '<C-u>', 'ctrl_u', 100 },   -- half page: the everyday one, kept quick
-  { '<C-d>', 'ctrl_d', 100 },
-  { '<M-u>', 'ctrl_u', 100 },   -- same keys tmux copy mode and claude scroll on
-  { '<M-d>', 'ctrl_d', 100 },
-  { '<C-b>', 'ctrl_b', 160 },   -- full page moves further, so it gets longer
-  { '<C-f>', 'ctrl_f', 160 },
-}) do
-  vim.keymap.set({ 'n', 'x' }, m[1], scroll(m[2], m[3]), { silent = true, desc = 'scroll ' .. m[2] })
-end
-
--- zz/zt/zb take half_win_duration, not duration -- a different signature, and
--- passing `duration` here silently animates over nil.
-for _, m in ipairs({ { 'zz', 'zz' }, { 'zt', 'zt' }, { 'zb', 'zb' } }) do
-  vim.keymap.set({ 'n', 'x' }, m[1], function()
-    neoscroll[m[2]]({ half_win_duration = 80 })
-  end, { silent = true, desc = 'recentre ' .. m[2] })
-end
 
 -- Flash. `s` in normal/visual/operator-pending is the jump; it shadows the
 -- built-in `s` (substitute character), which is no loss -- `cl` is the same
@@ -796,4 +748,11 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 })
 
 -- Keymaps
+-- Half-page scroll on M-u/M-d as well as C-u/C-d. tmux copy mode and the claude
+-- TUI both scroll on M-u/M-d now, so this makes one pair of keys scroll every
+-- pane whatever is running in it. C-u/C-d are kept, not replaced: they're what
+-- every vim doc, every plugin help file and every muscle memory assumes.
+vim.keymap.set({ 'n', 'x' }, '<M-u>', '<C-u>', { desc = 'half page up' })
+vim.keymap.set({ 'n', 'x' }, '<M-d>', '<C-d>', { desc = 'half page down' })
+
 vim.keymap.set('i', 'jk', '<Esc>')  -- jk to escape insert mode
