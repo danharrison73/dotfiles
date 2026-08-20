@@ -593,7 +593,9 @@ local function make_run(debug)
     -- The process gets a terminal split -- its stdout, and the equivalent of VS
     -- Code's integrated terminal. It outlives the session so the run's output
     -- is still there to read afterwards.
-    vim.cmd('botright 15new')
+    -- 9 rows: enough to read the tail of a run and see it is progressing,
+    -- without taking a third of the screen off the code the whole time.
+    vim.cmd('botright 9new')
     vim.fn.jobstart(cmd, { term = true })
     vim.b.dap_make_terminal = true   -- tagged so <leader>dq can find it again
     vim.cmd('wincmd p')   -- back to the code, so breakpoints stay one keypress away
