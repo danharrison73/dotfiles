@@ -416,10 +416,33 @@ table.insert(dap.configurations.python, {
   console = 'integratedTerminal',
 })
 
--- dap-ui. Defaults give the VS Code arrangement: a left sidebar carrying
--- scopes / breakpoints / stacks / watches, a bottom drawer carrying the repl.
+-- dap-ui. Left sidebar only: scopes / breakpoints / stacks / watches.
+--
+-- The default bottom drawer is dropped. It carried two things, neither earning
+-- ten rows: a `console` element that never receives anything here (every
+-- configuration runs with console = 'integratedTerminal', so the program's
+-- output goes to a terminal buffer instead -- and on the <leader>dM route it is
+-- already visible in the make split), and the repl, which <leader>dr opens on
+-- demand anyway.
+--
+-- controls off: the play/pause/step buttons dap-ui draws in a winbar. Every one
+-- of them has a keymap, and the winbar costs a line of whichever window hosts it.
 local dapui = require('dapui')
-dapui.setup()
+dapui.setup({
+  layouts = {
+    {
+      elements = {
+        { id = 'scopes',      size = 0.25 },
+        { id = 'breakpoints', size = 0.25 },
+        { id = 'stacks',      size = 0.25 },
+        { id = 'watches',     size = 0.25 },
+      },
+      size = 40,
+      position = 'left',
+    },
+  },
+  controls = { enabled = false },
+})
 
 -- Open on session start, close on session end, so a dead session never leaves
 -- panes behind showing variables that no longer exist.

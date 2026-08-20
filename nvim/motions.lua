@@ -262,8 +262,10 @@ local edit_me = "build(one, two, three)"
 --                   reports how many splits it closed rather than failing quiet.
 --
 --    Inspecting:
---      <leader>du   toggle the dap-ui panes (scopes / breakpoints / stacks /
---                   watches on the left, repl in the drawer below)
+--      <leader>du   toggle the dap-ui panes — scopes / breakpoints / stacks /
+--                   watches, a left sidebar only. No bottom drawer: its console
+--                   element stays empty (everything runs in an integrated
+--                   terminal) and the repl is <leader>dr on demand.
 --      <leader>de   evaluate -- the word under the cursor in normal mode, or
 --                   the SELECTION in visual mode, so you can highlight
 --                   `self.cache[key]` and ask for exactly that
