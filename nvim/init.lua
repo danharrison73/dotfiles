@@ -468,22 +468,26 @@ vim.keymap.set('n', '<leader>dc', dap.continue)
 vim.keymap.set('n', '<leader>dC', dap.run_to_cursor) -- one-shot breakpoint here, then resume
 vim.keymap.set('n', '<leader>dR', dap.run_last)      -- rerun the last configuration, skipping the picker
 
--- Stepping on hjkl, reading the directions as movement through the call stack
--- rather than across the screen: l goes IN (deeper, one frame down), h comes
--- back OUT to the caller, j moves ON to the next line at this level. The F-keys
--- above still work -- these are an alias, not a replacement.
+-- Stepping on hjkl, with the call stack drawn vertically: callees are BELOW,
+-- callers ABOVE, and execution runs left to right along the current line.
+--   l  step OVER -- carry on rightwards, calls run without descending
+--   j  step INTO -- drop DOWN into the callee
+--   k  step OUT  -- come back UP to the caller
+-- The F-keys above still work; these are an alias, not a replacement.
 --
 -- Deliberately behind <leader> rather than bare h/j/k/l while stopped. Plain
 -- motions are needed constantly at a breakpoint: to reach a line for
 -- <leader>dC, to select an expression for <leader>de, or just to read the code
 -- around the stop. Shadowing them would cost more than it saves.
-vim.keymap.set('n', '<leader>dl', dap.step_into)
-vim.keymap.set('n', '<leader>dh', dap.step_out)
-vim.keymap.set('n', '<leader>dj', dap.step_over)
+vim.keymap.set('n', '<leader>dl', dap.step_over)
+vim.keymap.set('n', '<leader>dj', dap.step_into)
+vim.keymap.set('n', '<leader>dk', dap.step_out)
 
--- K and J move the VIEW up and down the stack without executing anything:
--- the frame you're inspecting changes, the program does not advance. Scopes and
--- <leader>de follow the selected frame.
+-- Capitals are the same directions with nothing executed: they move which frame
+-- you are LOOKING at, up towards the caller or down towards the callee, while
+-- the program stays exactly where it stopped. Scopes and <leader>de follow the
+-- selected frame. So dk and dK both take you to the caller -- dk by running the
+-- rest of the function, dK by just looking.
 vim.keymap.set('n', '<leader>dK', function() require('dap').up() end)
 vim.keymap.set('n', '<leader>dJ', function() require('dap').down() end)
 vim.keymap.set('n', '<leader>dt', dap.terminate)

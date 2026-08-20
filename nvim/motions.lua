@@ -211,14 +211,16 @@ local edit_me = "build(one, two, three)"
 --  unparseable and nvim-dap silently falls back to the generic configs. Put
 --  comments on their own line and drop the trailing commas.
 --
---    hjkl, read as movement through the CALL STACK rather than the screen:
---      <leader>dl   step INTO  — one frame deeper (l = inwards)
---      <leader>dh   step OUT   — back to the caller (h = outwards)
---      <leader>dj   step OVER  — on to the next line at this level
---      <leader>dK   move the VIEW up one frame   — inspect the caller
---      <leader>dJ   move the VIEW down one frame — nothing executes for these
---                   two; the frame you're looking at changes, the program
---                   does not advance. Scopes and <leader>de follow it.
+--    hjkl, with the call stack drawn vertically — callees below, callers above,
+--    and execution running left to right along the current line:
+--      <leader>dl   step OVER — carry on rightwards; calls run, you don't descend
+--      <leader>dj   step INTO — drop DOWN into the callee
+--      <leader>dk   step OUT  — come back UP to the caller
+--      <leader>dK   look UP one frame    — same directions, nothing executed:
+--      <leader>dJ   look DOWN one frame    only the frame you're inspecting
+--                   changes. So dk and dK both reach the caller — dk by running
+--                   the rest of the function, dK by only looking. Scopes and
+--                   <leader>de follow the selected frame.
 --
 --    F-keys, exactly VS Code's:
 --      <F5>       start a session / resume from a stop
