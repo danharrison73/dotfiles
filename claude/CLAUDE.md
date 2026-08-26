@@ -88,10 +88,27 @@ Use the actual glyphs:
 - Subscripts: ₀₁₂₃₄₅₆₇₈₉ ₊₋₌₍₎ ₐ ₑ ₕ ᵢ ⱼ ₖ ₗ ₘ ₙ ₒ ₚ ᵣ ₛ ₜ ᵤ ᵥ ₓ
 - Accents (combining, type the base char then the mark): x̂ x̄ x̃ ẋ ẍ x⃗ θ̂ μ̂ ȳ
 
-When a sub/superscript has no Unicode form (`x_{i+1}`, `σ²_max`), fall back to
-plain `x_(i+1)` / `σ²_max` — never `x_{i+1}` with braces.
+**Every** index is a glyph, not an underscore. `gᵣ`, `p̂ᵣᵢ`, `xᵣᵢᵀ`, `θ̂ₖ`, `∑ᵢ` —
+never `g_r`, `p̂_ri`, `x_ri^T`, `theta_k`. This holds in running prose exactly as
+much as in a display block, and it holds for *every* symbol in an equation — one
+underscore among glyphs is the same failure as all of them. Before sending, read
+each equation back index by index and check.
+
+The fallback is only for indices with **no** glyph at all. There is no subscript
+b, c, d, f, g, q, v, w, y or z, and no superscript for most of the alphabet — so
+`n_races`, `x_{i+1}`, `σ²_max` have no full Unicode form. Two ways out, in order
+of preference: rewrite the symbol so the index disappears ("races in partition k"
+→ `nₖ`; `x_{r,winner}` → "the winner's row"), or fall back to parenthesised plain
+text `x_(i+1)` / `σ²_max`. Never braces, and never a bare underscore where a glyph
+exists.
 
 Simple fractions go inline with `/` and explicit parens: `(a + b)/(2c)`, not `a+b/2c`.
+
+Exponentials are written `exp(...)`, never `e` raised to a power — `exp(θ xᵣⱼ)`, not
+`e^(θ xᵣⱼ)` and not `eᶿ`. Unicode has superscript glyphs for almost nothing that shows
+up in a real exponent, so `e` to the power of anything non-trivial degrades to an ASCII
+caret with parens, which reads worse than the function form. Applies in LaTeX files too:
+`\exp(\theta x_{rj})`, not `e^{\theta x_{rj}}`.
 
 ## Display math
 
