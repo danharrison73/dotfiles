@@ -243,6 +243,13 @@ local edit_me = "build(one, two, three)"
 --                   the rest of the function, dK by only looking. Scopes and
 --                   <leader>de follow the selected frame.
 --
+--    The same three moves on ONE key, and from ANY window -- the dap-ui panes
+--    included, so a step you think of while reading the scopes pane doesn't
+--    cost a trip back to the code first:
+--      <C-l>        step OVER      <C-j>   step INTO      <C-k>   step OUT
+--    Nothing is shadowed: with no session stopped each key does what it always
+--    did, so <C-l> still redraws and clears the search highlight.
+--
 --    F-keys, exactly VS Code's:
 --      <F5>       start a session / resume from a stop
 --      <F10>      step over          <F11>   step into
@@ -283,18 +290,72 @@ local edit_me = "build(one, two, three)"
 --                   reports how many splits it closed rather than failing quiet.
 --
 --    Inspecting:
---      <leader>du   toggle the dap-ui panes — scopes / breakpoints / stacks /
---                   watches, a left sidebar only. No bottom drawer: its console
---                   element stays empty (everything runs in an integrated
---                   terminal) and the repl is <leader>dr on demand.
+--      K            hover docs normally; the VALUE under the cursor while the
+--                   session is stopped. At a breakpoint that is the question
+--                   you actually have, and it is the key your hands already
+--                   reach for -- the docs are back the moment the session ends.
 --      <leader>de   evaluate -- the word under the cursor in normal mode, or
 --                   the SELECTION in visual mode, so you can highlight
 --                   `self.cache[key]` and ask for exactly that
 --      <leader>dr   toggle the repl -- a real python prompt inside the stopped
 --                   frame, where every local is already in scope
+--      <leader>du   toggle the dap-ui panes -- scopes / breakpoints / stacks /
+--                   watches, a left sidebar only. No bottom drawer: its console
+--                   element stays empty (everything runs in an integrated
+--                   terminal) and the repl is <leader>dr on demand.
 --
---    Values also appear inline at end-of-line as you step (dap-virtual-text),
---    which is usually enough that you never open the scopes pane.
+--    Watches, without leaving the code. When the expression is already on
+--    screen the trip to the pane IS the cost of the watch, so these add one and
+--    leave the cursor exactly where it was:
+--      <leader>da   watch the expression under the cursor -- the whole dotted
+--                   name (`self.cache`, not just `cache`) -- or the SELECTION
+--                   in visual mode for what that cannot reach: `rows[i]['px']`,
+--                   a slice, a call. Six watches is six keypresses, not six
+--                   round trips. Works before a session starts, too: dap-ui
+--                   keeps watches across sessions, so line them all up and
+--                   then hit <F5>.
+--      <leader>dA   prompt for an expression that is nowhere in the file, e.g.
+--                   `len(self.pending)` or `[r.id for r in rows]`
+--      <leader>dX   clear every watch -- they outlive the session that made
+--                   them, which is the point, and also why the pane silts up
+--                   with expressions from three bugs ago
+--      <leader>dW   the other way round: into the pane, in insert, to TYPE one
+--
+--    Moving around a stopped session. The cost worth removing is the window
+--    round-trip -- <C-w>h, read, <C-w>p is three keystrokes wrapped around the
+--    one that did the work, paid every time you get curious:
+--      <Esc>        (in any dap-ui pane, or the repl) back to the code. It
+--                   FINDS the source window rather than using wincmd p, which
+--                   is wrong the moment you have hopped between two panes.
+--      <leader>ds   scopes  -- in AND out on the same key
+--      <leader>dS   stacks  -- ditto
+--      <leader>dw   watches -- ditto
+--      <leader>df   jump the cursor to the line the program is stopped on, from
+--                   wherever reading the code took you. The counterpart to
+--                   dK/dJ: those choose which frame you are looking at, this
+--                   puts you on the line about to execute in it.
+--      <leader>dL   every breakpoint into the quickfix list, so :cnext walks
+--                   them -- the breakpoints PANE shows the same set but cannot
+--                   jump you to one
+--
+--    Inline values (dap-virtual-text). Each variable's value is printed past
+--    the end of the line that produced it as you step -- usually enough that
+--    you never open the scopes pane. Two things are tuned for space:
+--      * position is `eol`, not the plugin's `inline` default. Inline INSERTS
+--        the value into the line and pushes your code right, so a six-key dict
+--        can shove the end of a statement off screen. At eol the values sit in
+--        space that was empty anyway and the code never moves.
+--      * values are cut to 40 CHARACTERS (not bytes -- a byte cut splits a
+--        codepoint and leaves `<c3>` behind). A repr is however long the object
+--        is; untruncated it stops being a hint and becomes the line.
+--    The full value is always one key away, so the hint only has to be enough
+--    to RECOGNISE a value, not to read it:
+--      K            the value under the cursor, in a float
+--      <leader>de   same, and works over a visual SELECTION
+--      <leader>da   pin it in the watches pane and keep reading
+--      <leader>dv   expand every value to full length; again to collapse
+--      <leader>dV   virtual text off entirely, for a line long enough that
+--                   even a truncated hint is in the way
 --
 --    Which venv runs your code: $VIRTUAL_ENV if one is active, else
 --    $CONDA_PREFIX, else the first venv/.venv/env/.env directory in the cwd or
@@ -306,6 +367,68 @@ local edit_me = "build(one, two, three)"
 --    The run picker <F5> shows: `file` (this buffer), `file:args` (prompts for
 --    argv), `file:libs` (same, but steps into library code), `module`
 --    (python -m …), `attach`, `file:doctest`.
+--
+--  GIT HUNKS  (lewis6991/gitsigns.nvim)
+--
+--  The inline half of "show me the diff": what changed on THIS line, answered
+--  without leaving the line. What changed across a branch is a different
+--  question and wants a different tool.
+--
+--  Prefix is <leader>g, not gitsigns' own <leader>h -- that is harpoon's menu
+--  here, and harpoon is used far more often than any hunk operation.
+--
+--    The signs:
+--      ┃            lines added or changed
+--      ▁ / ▔        a deletion, below / above the cursor line
+--      ~            a line changed AND lines deleted with it
+--      ┆            (dashed) a file git has never seen -- untracked. Solid
+--                   vs dashed is "new lines" vs "new file". Anything
+--                   .gitignore covers stays dark: gitsigns looks untracked
+--                   files up with `ls-files --others --exclude-standard`.
+--
+--    signcolumn is forced to `yes` in init.lua rather than left on `auto`, so
+--    the column is always reserved. On `auto` the first hunk shifts the whole
+--    file two columns right and undoing it shifts back -- text that jitters
+--    sideways while you edit.
+--
+--    Moving:
+--      ]c / [c      next / previous hunk. Inside a real diff split these fall
+--                   through to vim's own diff-mode motions, which is what they
+--                   have to mean there.
+--
+--    Reading:
+--      <leader>gp   preview the hunk INLINE -- the old lines open underneath,
+--                   in the buffer, no float to dismiss
+--      <leader>gP   the same in a float, when the inline version would push too
+--                   much of the file off screen
+--      <leader>gb   full blame for this line: commit, author, date, message
+--      <leader>gB   toggle the end-of-line blame virtual text (it is ON by
+--                   default here) for when it is in the way
+--      <leader>gd   diff this file against the INDEX (what `git diff` shows)
+--      <leader>gD   diff this file against the last commit (`git diff HEAD`)
+--      <leader>gq   every hunk in this buffer into the quickfix list
+--      <leader>gQ   every hunk in the REPO into the quickfix list
+--
+--    Staging -- the point of the whole plugin. A buffer holding three unrelated
+--    fixes becomes three commits without a single `git add -p`:
+--      <leader>gs   stage the hunk under the cursor. On an ALREADY-staged hunk
+--                   it unstages -- one key, both directions, which is why there
+--                   is no separate unstage binding.
+--      <leader>gr   discard the hunk (reset it to what git has)
+--      <leader>gS   stage every change in the buffer
+--      <leader>gR   discard every change in the buffer
+--      {visual}gs   stage only the SELECTED lines -- part of a hunk, down to
+--      {visual}gr   one line. Same for discard.
+--
+--    ih is a TEXT OBJECT, which is what makes this vim rather than a git client:
+--      dih          delete the hunk under the cursor
+--      vih          select it -- then <leader>gs to stage exactly that
+--      =ih          reindent just it
+--
+--    diffopt+=linematch:60 is set in init.lua alongside this. It is neovim's own
+--    diff refinement, off by default: without it a line with one word changed
+--    shows as a whole line deleted plus a whole line added. Applies to every
+--    diff nvim draws, these previews included.
 --
 --  CORE  (no plugin)
 --    jk           (insert mode) escape to normal mode — the one you added

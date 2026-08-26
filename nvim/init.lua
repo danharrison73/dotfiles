@@ -72,6 +72,18 @@ require('lazy').setup({
       'nvim-tree/nvim-web-devicons', -- wezterm falls back to bundled nerd symbols
     },
   },
+  -- Git hunks in the gutter, and everything you want to do to one from there.
+  -- This is the *inline* half of "show me the diff": what changed on this line,
+  -- answered without leaving the line. The other half -- what changed across a
+  -- branch -- wants a file list and a two-pane view, and is a different tool.
+  --
+  -- Earns its place here because the files change underneath this editor: a
+  -- claude in the next tmux window, a formatter, a rebase. The gutter is what
+  -- makes "which lines did something else touch, and do I agree" a glance
+  -- rather than a `git diff` in another pane.
+  {
+    'lewis6991/gitsigns.nvim',
+  },
   -- LSP: mason installs language servers, mason-lspconfig bridges to lspconfig
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
@@ -191,6 +203,88 @@ require('neo-tree').setup({
   },
 })
 vim.keymap.set('n', '<leader>e', '<Cmd>Neotree toggle reveal left<CR>')
+
+-- Gitsigns. The signs and the blame are the passive half; the hunk keymaps
+-- below are the half that makes it a diff tool rather than a decoration.
+--
+-- Prefix is <leader>g, not gitsigns' own suggested <leader>h -- that one is
+-- harpoon's quick menu here, and harpoon is used far more often than any hunk
+-- operation. `g` for git costs nothing and is the more obvious letter anyway.
+require('gitsigns').setup({
+  -- Blame the current line as virtual text at end of line. Off by default in
+  -- gitsigns, and it is the single most useful thing it does: "who wrote this
+  -- and why" answered continuously instead of on request. 400ms so it follows
+  -- the cursor without flickering during a motion.
+  current_line_blame = true,
+  current_line_blame_opts = { delay = 400, virt_text_pos = 'eol' },
+  current_line_blame_formatter = '  <author>, <author_time:%Y-%m-%d> — <summary>',
+
+  -- Sign a file git has never seen, not just changed lines in a tracked one.
+  -- Off by default upstream because on some repos it is noise -- but not here:
+  -- gitsigns looks untracked files up with `ls-files --others --exclude-standard`,
+  -- and --exclude-standard means anything .gitignore covers returns nothing.
+  -- So build output and venvs stay dark and only genuinely-new files light up.
+  --
+  -- Worth having because of how these files get written: a claude in the next
+  -- tmux window creating a file is exactly the case where "this exists but git
+  -- has never heard of it" needs to be visible before the commit that misses it.
+  -- The untracked sign is `┆` -- dashed, against the solid `┃` of an added line,
+  -- so "new file" and "new lines" stay distinguishable at a glance.
+  attach_to_untracked = true,
+
+  on_attach = function(bufnr)
+    local gs = require('gitsigns')
+    local function map(mode, lhs, rhs, desc, opts)
+      vim.keymap.set(mode, lhs, rhs, vim.tbl_extend('keep', opts or {}, { buffer = bufnr, desc = desc }))
+    end
+
+    -- Hunk motion. ]c/[c are vim's own diff-mode motions, and inside a real
+    -- diff split that is what they must stay -- so fall through when diffmode
+    -- is on and only take over in an ordinary buffer.
+    --
+    -- expr = true is load-bearing, not decoration: it is what makes the RETURN
+    -- VALUE the keys to press. Without it the string is discarded and the
+    -- fallthrough silently does nothing inside a diff.
+    map('n', ']c', function()
+      if vim.wo.diff then return ']c' end
+      vim.schedule(function() gs.nav_hunk('next') end)
+      return '<Ignore>'
+    end, 'next hunk', { expr = true })
+    map('n', '[c', function()
+      if vim.wo.diff then return '[c' end
+      vim.schedule(function() gs.nav_hunk('prev') end)
+      return '<Ignore>'
+    end, 'previous hunk', { expr = true })
+
+    -- Reading a hunk.
+    map('n', '<leader>gp', gs.preview_hunk_inline, 'preview hunk inline')
+    map('n', '<leader>gP', gs.preview_hunk,        'preview hunk in a float')
+    map('n', '<leader>gb', function() gs.blame_line({ full = true }) end, 'blame this line, full')
+    map('n', '<leader>gB', gs.toggle_current_line_blame, 'toggle the inline blame')
+    map('n', '<leader>gd', gs.diffthis,                  'diff this file against the index')
+    map('n', '<leader>gD', function() gs.diffthis('~') end, 'diff this file against the last commit')
+    map('n', '<leader>gq', gs.setqflist, 'every hunk in this buffer to the quickfix list')
+    map('n', '<leader>gQ', function() gs.setqflist('all') end, 'every hunk in the REPO to the quickfix list')
+
+    -- Changing a hunk. Staging one hunk at a time is the point of the whole
+    -- plugin: a buffer with three unrelated fixes in it becomes three commits
+    -- without a single `git add -p`.
+    map('n', '<leader>gs', gs.stage_hunk,  'stage this hunk')
+    map('n', '<leader>gr', gs.reset_hunk,  'discard this hunk')
+    map('n', '<leader>gS', gs.stage_buffer, 'stage the whole buffer')
+    map('n', '<leader>gR', gs.reset_buffer, 'discard every change in the buffer')
+    -- Same two over a visual selection -- PART of a hunk, down to one line.
+    map('v', '<leader>gs', function() gs.stage_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end, 'stage selected lines')
+    map('v', '<leader>gr', function() gs.reset_hunk({ vim.fn.line('.'), vim.fn.line('v') }) end, 'discard selected lines')
+    -- No unstage key: <leader>gs on an already-staged hunk unstages it, which
+    -- is why gitsigns deprecated undo_stage_hunk. One key, both directions.
+
+    -- A hunk as a TEXT OBJECT, which is the part that makes this feel like vim
+    -- rather than like a git client: `dih` deletes the hunk under the cursor,
+    -- `vih` selects it to stage part of it, `=ih` reindents just it.
+    map({ 'o', 'x' }, 'ih', gs.select_hunk, 'inner hunk')
+  end,
+})
 
 -- Autocompletion (nvim-cmp + LuaSnip)
 local cmp = require('cmp')
@@ -359,7 +453,19 @@ vim.api.nvim_create_autocmd('LspAttach', {
     local pick = require('telescope.builtin')
     vim.keymap.set('n', 'gd', pick.lsp_definitions, opts)         -- go to definition
     vim.keymap.set('n', 'gr', pick.lsp_references, opts)          -- find references
-    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)            -- hover docs
+    -- K is hover docs normally, and the VALUE of the thing under the cursor
+    -- while a session is stopped -- at a breakpoint that is the question you
+    -- actually have, and it is the key your hands already reach for. The docs
+    -- are still there the moment the session ends. <leader>de is the same
+    -- evaluation asked for explicitly, and the one that works over a visual
+    -- selection.
+    vim.keymap.set('n', 'K', function()
+      local s = require('dap').session()
+      if s and s.stopped_thread_id then
+        return require('dapui').eval(nil, { enter = true })
+      end
+      vim.lsp.buf.hover()
+    end, opts)                                                    -- hover docs / value here
     vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)   -- rename symbol
     vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts) -- code action
     vim.keymap.set('n', ']d', function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
@@ -468,10 +574,73 @@ dap.listeners.before.launch.dapui_config = function() dapui.open() end
 dap.listeners.before.event_terminated.dapui_config = function() dapui.close() end
 dap.listeners.before.event_exited.dapui_config = function() dapui.close() end
 
--- Values printed inline at end of line, against the code that produced them.
--- This is the part that makes a stopped frame readable without looking at the
--- scopes pane at all -- the one thing VS Code has no equivalent for.
-require('nvim-dap-virtual-text').setup()
+-- Values printed beside the code that produced them. This is the part that
+-- makes a stopped frame readable without looking at the scopes pane at all --
+-- the one thing VS Code has no equivalent for.
+--
+-- Two defaults are worth overriding, both about space:
+--
+--   * virt_text_pos. On nvim 0.10+ this plugin defaults to `inline`, which
+--     INSERTS the value into the line and pushes your actual code rightwards to
+--     make room. A dict with six keys can shove the end of the statement off
+--     screen. `eol` parks every value past the end of the line instead, in
+--     space that was empty anyway, so the code never moves. The cost is that
+--     values are no longer adjacent to their variable -- which is why eol mode
+--     labels them `name = value` and inline mode doesn't.
+--
+--   * length. A repr is however long the object is: a dataframe row, a list of
+--     500 floats, a nested dict. Truncating is the whole difference between
+--     "the line has a hint on it" and "the line is gone".
+--
+-- The full value is never more than one key away -- K on the variable, or
+-- <leader>de over a selection, or <leader>da to pin it in the watches pane --
+-- so the virtual text only has to be enough to RECOGNISE a value, not read it.
+-- 40 characters is about a short list, a number, a bool, or the head of a
+-- string.
+local vt_limit = 40
+local vt_full = false      -- <leader>dv flips this
+
+require('nvim-dap-virtual-text').setup({
+  virt_text_pos = 'eol',
+  -- Trailing `, ` between several variables on one line, rather than the
+  -- default bare comma -- at end of line they run together otherwise.
+  separator = ', ',
+
+  display_callback = function(variable, _, _, _, opts)
+    -- Newlines first: a multi-line repr rendered as virtual text silently eats
+    -- everything after the first line, so flatten before measuring.
+    local value = variable.value:gsub('%s+', ' ')
+    -- Count and cut in CHARACTERS, not bytes. A byte-wise :sub() splits a
+    -- multibyte codepoint down the middle and the orphaned lead byte renders
+    -- as `<c3>`, which is worse than the text it replaced. strcharpart cannot
+    -- land mid-codepoint, so the limit also means what it says on a line of
+    -- accented or non-latin text.
+    if not vt_full and vim.fn.strchars(value) > vt_limit then
+      value = vim.fn.strcharpart(value, 0, vt_limit) .. '…'
+    end
+    if opts.virt_text_pos == 'inline' then
+      return ' = ' .. value
+    end
+    return variable.name .. ' = ' .. value
+  end,
+})
+
+-- <leader>dv -- expand every value to its full length, and again to collapse.
+-- The escape hatch for the one variable that is the whole reason you stopped:
+-- flip it on, read it, flip it back, without touching the config.
+vim.keymap.set('n', '<leader>dv', function()
+  vt_full = not vt_full
+  require('nvim-dap-virtual-text').refresh()
+  vim.notify('virtual text: ' .. (vt_full and 'full values' or vt_limit .. ' columns'))
+end)
+
+-- <leader>dV -- off entirely. For when the line is long enough that even a
+-- truncated hint is in the way, and the scopes pane is the better place to read.
+vim.keymap.set('n', '<leader>dV', function()
+  local vt = require('nvim-dap-virtual-text')
+  vt.toggle()
+  vim.notify('virtual text: ' .. (vt.is_enabled() and 'on' or 'off'))
+end)
 
 -- Signs. Undefined, every dap sign renders as the letter `B`, so a breakpoint
 -- and the line you're stopped on look identical in the gutter.
@@ -538,9 +707,204 @@ vim.keymap.set({ 'n', 'v' }, '<leader>de', function()
   -- visual mode -- so you can highlight `self.cache[key]` and evaluate that.
   dapui.eval(nil, { enter = true })                  -- enter = put the cursor in the float, to expand children
 end)
+-- <leader>dw -- straight into the watches pane, and <leader>dW straight into
+-- adding one. The pane is the bottom quarter of the sidebar, so reaching it by
+-- hand is <C-w>h then <C-w>j then i -- three keystrokes to get to the keystroke
+-- that does the work, every time you think of something to watch.
+--
+-- Falls back to dap-ui's floating watches when the sidebar is closed (you shut
+-- it with <leader>du, or there is no session yet): same element, same state,
+-- just drawn over the code instead of beside it. `q` closes the float.
+--
+-- Generic over the element rather than watches-only: scopes, stacks and
+-- breakpoints live in the same sidebar and all want the same in-and-out-on-one-
+-- key treatment. Only watches takes `add` -- the others have nothing to type
+-- into.
+local function focus_element(id, add)
+  local ft = 'dapui_' .. id
+  -- Already there: the same key takes you back, so it is one binding in and the
+  -- same binding out rather than <C-w>p as a separate thing to remember.
+  if vim.bo.filetype == ft then
+    return vim.cmd('wincmd p')
+  end
+  local win
+  for _, w in ipairs(vim.api.nvim_list_wins()) do
+    if vim.bo[vim.api.nvim_win_get_buf(w)].filetype == ft then win = w break end
+  end
+  if win then
+    vim.api.nvim_set_current_win(win)
+  else
+    dapui.float_element(id, { enter = true })
+  end
+  if not add then return end
+  -- The float opens asynchronously (dap-ui runs it through nio), so `i` cannot
+  -- be sent straight away -- it would land in whatever buffer is still current
+  -- and start editing the FILE. Wait for the watches buffer to arrive instead,
+  -- and give up rather than retry forever if it never does.
+  local tries = 0
+  local function insert()
+    if vim.bo.filetype == ft then
+      vim.api.nvim_feedkeys('i', 'n', false)
+    elseif tries < 20 then
+      tries = tries + 1
+      vim.defer_fn(insert, 25)
+    end
+  end
+  insert()
+end
+vim.keymap.set('n', '<leader>dw', function() focus_element('watches', false) end)  -- toggle in and out
+vim.keymap.set('n', '<leader>dW', function() focus_element('watches', true) end)   -- in, adding one
+vim.keymap.set('n', '<leader>ds', function() focus_element('scopes') end)          -- locals/globals, in and out
+vim.keymap.set('n', '<leader>dS', function() focus_element('stacks') end)          -- the call stack, in and out
+
 -- Debug the test the cursor is inside, no configuration and no picker. pytest
 -- and unittest both; dap-python reads the enclosing def/class from treesitter.
 vim.keymap.set('n', '<leader>dm', function() require('dap-python').test_method() end)
+
+-- ---------------------------------------------------------------------------
+-- Moving around a live session.
+--
+-- Everything above is "what to do"; this is "where to be while doing it". The
+-- cost it removes is the window round-trip: a glance at a variable that goes
+-- <C-w>h, read, <C-w>p is three keystrokes of overhead wrapped around the one
+-- that did the work, and you pay it every time you get curious.
+-- ---------------------------------------------------------------------------
+
+-- Stopped, and stopped somewhere we can act on. `dap.session()` alone is also
+-- true while the program is RUNNING, and stepping then does nothing visible --
+-- so the fall-through keys below ask for the thread as well.
+local function dap_stopped()
+  local s = dap.session()
+  return s ~= nil and s.stopped_thread_id ~= nil
+end
+
+-- One-key stepping, from any window including the dap-ui panes.
+--
+-- <leader>dl/dj/dk stay -- they are the mnemonic set, and the comment above
+-- explains the l/j/k geometry they share with these. But three keystrokes is
+-- fine for one step and tiring for thirty, and they only fire in the code
+-- window, so a step thought of while reading the scopes pane costs a trip back
+-- first. These are the same three moves on one keystroke from wherever the
+-- cursor happens to be.
+--
+-- Nothing is shadowed: with no session stopped each key does what it always
+-- did, so <C-l> still redraws and clears the search highlight when you are not
+-- debugging.
+local function when_stopped(action, fallback)
+  return function()
+    if dap_stopped() then return action() end
+    if fallback then fallback() end
+  end
+end
+vim.keymap.set('n', '<C-l>', when_stopped(dap.step_over, function()
+  vim.cmd('nohlsearch')
+  vim.cmd('mode')          -- the redraw half of what <C-l> normally does
+end), { desc = 'dap step over / redraw' })
+vim.keymap.set('n', '<C-j>', when_stopped(dap.step_into, function()
+  vim.cmd('normal! j')
+end), { desc = 'dap step into / line down' })
+vim.keymap.set('n', '<C-k>', when_stopped(dap.step_out), { desc = 'dap step out' })
+
+-- The expression the cursor is on. <cexpr> in normal mode, which takes the
+-- whole dotted name (`self.cache`, not just `cache`); the selection in visual,
+-- for the things <cexpr> cannot see on its own -- `rows[i]['price']`, a slice,
+-- a call. Read straight out of the buffer rather than via a yank, so neither
+-- the cursor nor any register moves.
+local function current_expr()
+  local m = vim.fn.mode()
+  if m == 'v' or m == 'V' or m == '\22' then
+    local a, b = vim.fn.getpos('v'), vim.fn.getpos('.')
+    local sr, sc, er, ec = a[2], a[3], b[2], b[3]
+    if sr > er or (sr == er and sc > ec) then sr, sc, er, ec = er, ec, sr, sc end
+    if m == 'V' then sc, ec = 1, #vim.fn.getline(er) end
+    local lines = vim.api.nvim_buf_get_text(0, sr - 1, sc - 1, er - 1, ec, {})
+    return (table.concat(lines, ' '):gsub('^%s+', ''):gsub('%s+$', ''))
+  end
+  return vim.fn.expand('<cexpr>')
+end
+
+-- <leader>da -- watch the thing under the cursor WITHOUT leaving the code.
+--
+-- <leader>dW gets you into the pane to type an expression, which is right when
+-- you are inventing one. But most watches are a name already on screen, and for
+-- those the round trip is the entire cost of the operation. Here the cursor
+-- does not move, the pane is not focused, and the value simply appears in the
+-- sidebar -- so watching six things is six keystrokes-worth of `<leader>da`,
+-- not six trips.
+--
+-- Works before a session starts, too: dap-ui keeps watches across sessions
+-- (`allow_without_session`), so you can line them all up and then hit <F5>.
+local function add_watch(expr)
+  local w = dapui.elements.watches
+  if not w then
+    return vim.notify('dap-ui watches not registered yet', vim.log.levels.WARN)
+  end
+  expr = expr or current_expr()
+  if expr == '' then
+    return vim.notify('nothing under the cursor to watch', vim.log.levels.WARN)
+  end
+  w.add(expr)
+  vim.notify('watching  ' .. expr)
+  -- Leave visual mode; staying in it over an expression already watched is
+  -- never what the next keystroke wants.
+  if vim.fn.mode() ~= 'n' then
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes('<Esc>', true, false, true), 'n', false)
+  end
+end
+vim.keymap.set({ 'n', 'v' }, '<leader>da', function() add_watch() end)
+vim.keymap.set('n', '<leader>dA', function()
+  -- The one <leader>da cannot reach: an expression that is nowhere in the file,
+  -- e.g. `len(self.pending)` or `[r.id for r in rows]`. Still no round trip.
+  local expr = vim.fn.input('Watch: ')
+  if expr ~= '' then add_watch(expr) end
+end)
+vim.keymap.set('n', '<leader>dX', function()
+  -- Watches outlive the session that made them, which is the point -- and the
+  -- reason the pane fills up with expressions from three bugs ago.
+  local w = dapui.elements.watches
+  if not w then return end
+  local n = #w.get()
+  for i = n, 1, -1 do w.remove(i) end
+  vim.notify(string.format('cleared %d watch(es)', n))
+end)
+
+-- <Esc> in any debugger pane -- back to the code, one key, no <C-w> anything.
+-- The code window is found rather than remembered (`wincmd p` is wrong as soon
+-- as you have hopped between two panes): it is the window showing a real file,
+-- so not a dap-ui element, not the repl, not the <leader>dM terminal split.
+local function focus_source()
+  local cur = vim.api.nvim_get_current_win()
+  for _, w in ipairs(vim.api.nvim_list_wins()) do
+    if w ~= cur then
+      local b = vim.api.nvim_win_get_buf(w)
+      if vim.bo[b].buftype == ''
+        and not vim.bo[b].filetype:match('^dapui_')
+        and vim.bo[b].filetype ~= 'dap-repl' then
+        return vim.api.nvim_set_current_win(w)
+      end
+    end
+  end
+  vim.cmd('wincmd p')   -- nothing qualified; the old behaviour is still better than nothing
+end
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'dapui_scopes', 'dapui_stacks', 'dapui_watches', 'dapui_breakpoints', 'dap-repl' },
+  callback = function(ev)
+    -- Normal mode only. The watches pane is a prompt buffer, where <Esc> in
+    -- INSERT has to keep meaning "stop typing this expression".
+    vim.keymap.set('n', '<Esc>', focus_source, { buffer = ev.buf, desc = 'back to the code' })
+  end,
+})
+
+-- <leader>df -- back to the frame the program is actually stopped in, from
+-- wherever reading the code took you. The counterpart to <leader>dK/<leader>dJ:
+-- those change which frame you are looking at, this one puts the cursor back on
+-- the line that is about to execute in the frame you have selected.
+vim.keymap.set('n', '<leader>df', dap.focus_frame)
+
+-- <leader>dL -- every breakpoint in the session, in the quickfix list, so
+-- `:cnext` walks them. The breakpoints PANE shows the same set but cannot jump
+-- you to one; this is the version you can navigate.
+vim.keymap.set('n', '<leader>dL', function() dap.list_breakpoints(true) end)
 
 -- <leader>dM -- run a Makefile target under the debugger in one keypress.
 -- The convention it relies on is `DEBUG=1`: a target that, given it, runs behind
@@ -568,6 +932,53 @@ dap.adapters.make_debugpy = function(cb, config)
       max_retries = 240,
     },
   })
+end
+
+-- One terminal split, reused. Every run below -- make, make DEBUG=1, and a bare
+-- python file -- goes through here, so a session of ten runs leaves one 9-row
+-- split at the bottom rather than ten stacked ones fighting over the screen.
+--
+-- A terminal buffer is bound to its job for life: you cannot restart a command
+-- in one. So reuse is of the WINDOW -- a fresh buffer is opened in place and the
+-- previous one deleted, which also kills a run still going. That is the intent:
+-- <leader>dM twice in a row means "replace that run with this one", not "have
+-- both". Read the output before rerunning, or :split the buffer to keep it.
+--
+-- 9 rows: enough to read the tail of a run and see it is progressing, without
+-- taking a third of the screen off the code the whole time.
+local function run_in_terminal(cmd)
+  -- Every tagged buffer, not just one: a config reloaded mid-session, or splits
+  -- made by hand, can leave more than one behind, and they all go.
+  local old = {}
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) and vim.b[buf].dap_make_terminal then
+      table.insert(old, buf)
+    end
+  end
+
+  -- Prefer a window that is already showing one -- that is the split to take
+  -- over. If they are all hidden, there is nothing on screen to reuse.
+  local win
+  for _, buf in ipairs(old) do
+    win = vim.fn.win_findbuf(buf)[1]
+    if win then break end
+  end
+
+  if win then
+    vim.api.nvim_set_current_win(win)
+    vim.cmd('enew')          -- fresh, empty, unmodified: what jobstart needs
+  else
+    vim.cmd('botright 9new')
+  end
+  for _, buf in ipairs(old) do
+    if vim.api.nvim_buf_is_valid(buf) then
+      vim.api.nvim_buf_delete(buf, { force = true })   -- force: kills a live job
+    end
+  end
+
+  vim.fn.jobstart(cmd, { term = true })
+  vim.b.dap_make_terminal = true   -- tagged so <leader>dq can find it again
+  vim.cmd('wincmd p')   -- back to the code, so breakpoints stay one keypress away
 end
 
 -- debug=false is the same picker without the debugger: the target just runs in
@@ -610,12 +1021,7 @@ local function make_run(debug)
     -- The process gets a terminal split -- its stdout, and the equivalent of VS
     -- Code's integrated terminal. It outlives the session so the run's output
     -- is still there to read afterwards.
-    -- 9 rows: enough to read the tail of a run and see it is progressing,
-    -- without taking a third of the screen off the code the whole time.
-    vim.cmd('botright 9new')
-    vim.fn.jobstart(cmd, { term = true })
-    vim.b.dap_make_terminal = true   -- tagged so <leader>dq can find it again
-    vim.cmd('wincmd p')   -- back to the code, so breakpoints stay one keypress away
+    run_in_terminal(cmd)
 
     if not debug then return end
     -- Fired immediately: the adapter's max_retries above is what waits for the
@@ -630,6 +1036,27 @@ local function make_run(debug)
 end
 vim.keymap.set('n', '<leader>dM', function() make_run(true) end)   -- debug it
 vim.keymap.set('n', '<leader>mm', function() make_run(false) end)  -- just run it
+
+-- <leader>rr -- run the current python file directly, no Makefile. The gap
+-- <leader>mm leaves: make_run needs a `## `-documented Makefile above the file,
+-- which a one-script project doesn't have. Same terminal-split behaviour as
+-- make_run (9 rows, outlives the run, focus back on the code), but the command
+-- is just `python <file>`. The interpreter is the nearest .venv above the file
+-- -- the same one dap-python picks for a debug session, so a run and a debug of
+-- the same file use the same dependencies -- falling back to python3 if none.
+vim.keymap.set('n', '<leader>rr', function()
+  local file = vim.fn.expand('%:p')
+  if vim.bo.filetype ~= 'python' or file == '' then
+    return vim.notify('Not a saved python file', vim.log.levels.WARN)
+  end
+  vim.cmd('write')   -- run what's on screen, not the last save
+  local venv = vim.fs.find('.venv', { upward = true, path = vim.fs.dirname(file), type = 'directory' })[1]
+  local py = venv and (venv .. '/bin/python') or 'python3'
+  -- Script args, the way make_run asks for make vars: e.g. `--no-cache`. Enter for none.
+  local args = vim.fn.input('args (optional): ')
+  local cmd = vim.fn.shellescape(py) .. ' ' .. vim.fn.shellescape(file) .. ' ' .. args
+  run_in_terminal(cmd)
+end)   -- run the current python file, no Makefile
 
 -- <leader>dq -- put the editor back how it was. dap-ui's panes already close
 -- themselves when a session ends (the listeners above fire on event_terminated
@@ -676,12 +1103,22 @@ vim.opt.showcmd = true
 vim.opt.laststatus = 2
 vim.opt.autowrite = true
 vim.opt.cursorline = true
+-- Always reserve the sign column. On the default 'auto' it only exists while
+-- something is in it, so the first gitsigns hunk shifts the whole file two
+-- columns right and undoing it shifts back -- text that jitters sideways as you
+-- edit. Reserving it costs two columns permanently and never moves.
+vim.opt.signcolumn = 'yes'
 vim.opt.autoread = true
 -- CursorHold's delay, and so how long an idle nvim waits before noticing a file
 -- changed underneath it. The 4s default is too long to feel automatic.
 vim.opt.updatetime = 250
 vim.opt.swapfile = false
 vim.opt.termguicolors = true
+-- linematch is neovim's own diff refinement, off by default: without it a line
+-- with one word changed shows as a whole line deleted and a whole line added.
+-- 60 is the cap on how many lines within a hunk it will try to align. Applies
+-- to every diff nvim draws -- :diffthis, and gitsigns' hunk previews.
+vim.opt.diffopt:append('linematch:60')
 
 -- Keep 8 lines of context above and below the cursor. This does more for how
 -- scrolling FEELS than any animation setting: with scrolloff at 0 the view only
