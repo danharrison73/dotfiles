@@ -180,6 +180,68 @@ vim.keymap.set('n', '<leader>fe', function()
   require('telescope').extensions.file_browser.file_browser({ path = '%:p:h' })
 end)
 
+-- <leader>fw -- pick a git worktree and work in it.
+--
+-- The problem this solves is specific to agent worktrees. Claude puts them at
+-- <repo>/.claude/worktrees/<name> and excludes that path in .git/info/exclude,
+-- so <leader>ff cannot see into one from the main checkout -- fd honours the
+-- exclude, and the directory is hidden besides. That exclusion is RIGHT: a
+-- worktree is a second full checkout, so without it every file in the project
+-- would appear once per worktree in every search. The fix is therefore not a
+-- flag on the finder; it is to be in the worktree in the first place.
+--
+-- No plugin. vim.ui.select goes through telescope-ui-select (see the telescope
+-- block above), so this is a fuzzy picker for free -- the same trick the
+-- Makefile target pickers use.
+local function git_worktrees()
+  local out = vim.fn.systemlist({ 'git', 'worktree', 'list', '--porcelain' })
+  if vim.v.shell_error ~= 0 then return nil end
+  local list, cur = {}, nil
+  for _, line in ipairs(out) do
+    local path = line:match('^worktree (.+)$')
+    if path then
+      cur = { path = path }
+      table.insert(list, cur)
+    elseif cur then
+      cur.branch = line:match('^branch refs/heads/(.+)$') or cur.branch
+      if line == 'detached' then cur.branch = '(detached)' end
+      if line:match('^locked') then cur.locked = true end
+    end
+  end
+  return list
+end
+
+vim.keymap.set('n', '<leader>fw', function()
+  local list = git_worktrees()
+  if not list then return vim.notify('not in a git repository', vim.log.levels.WARN) end
+  if #list < 2 then return vim.notify('no worktrees besides the main checkout') end
+
+  -- `git worktree list` always puts the main checkout first, which is what
+  -- makes it the thing every other path is shown relative to.
+  local root = list[1].path
+  local width = 0
+  for _, w in ipairs(list) do width = math.max(width, #(w.branch or '?')) end
+
+  vim.ui.select(list, {
+    prompt = 'worktree',
+    format_item = function(w)
+      -- Full path for the main checkout, and relative for the rest: an agent
+      -- worktree's identity is `.claude/worktrees/<name>`, and repeating the
+      -- repo root in front of every row buries it past the edge of the popup.
+      local where = w.path == root and w.path or w.path:sub(#root + 2)
+      return string.format('%-' .. width .. 's  %s%s',
+        w.branch or '?', where, w.locked and '  [locked]' or '')
+    end,
+  }, function(w)
+    if not w then return end
+    vim.cmd.cd(w.path)
+    vim.notify('cwd: ' .. w.path)
+    -- Straight into the finder, since "browse that worktree" is the reason you
+    -- came. <Esc> backs out of it if the cd was all you wanted.
+    require('telescope.builtin').find_files()
+  end)
+end)
+
 -- Flash. `s` in normal/visual/operator-pending is the jump; it shadows the
 -- built-in `s` (substitute character), which is no loss -- `cl` is the same
 -- thing and one key longer. `S` stays as-is: flash's treesitter jump is not

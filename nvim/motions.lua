@@ -368,6 +368,22 @@ local edit_me = "build(one, two, three)"
 --    argv), `file:libs` (same, but steps into library code), `module`
 --    (python -m …), `attach`, `file:doctest`.
 --
+--  WORKTREES
+--    <leader>fw   pick a git worktree, cd into it, and land in find_files
+--                 there. <Esc> out of the finder if the cd was the point.
+--
+--    Why it exists: claude puts agent worktrees at
+--    <repo>/.claude/worktrees/<name> and excludes that path in
+--    .git/info/exclude -- so <leader>ff CANNOT see into one from the main
+--    checkout. fd honours the exclude, and the directory is hidden besides.
+--    The exclusion is right: a worktree is a second full checkout, so without
+--    it every file in the project would show up once per worktree in every
+--    search. So the fix is not a flag on the finder -- it is to be in the
+--    worktree. `git worktree list` is the same information on the command line.
+--
+--    No plugin: vim.ui.select routes through telescope-ui-select, so it is a
+--    fuzzy picker for free -- the same trick the Makefile target pickers use.
+--
 --  GIT HUNKS  (lewis6991/gitsigns.nvim)
 --
 --  The inline half of "show me the diff": what changed on THIS line, answered
