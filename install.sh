@@ -49,6 +49,7 @@ symlink "$DOTFILES_DIR/claude/settings.json"      "$HOME/.claude/settings.json"
 symlink "$DOTFILES_DIR/claude/CLAUDE.md"          "$HOME/.claude/CLAUDE.md"
 symlink "$DOTFILES_DIR/claude/keybindings.json"   "$HOME/.claude/keybindings.json"
 symlink "$DOTFILES_DIR/claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
+symlink "$DOTFILES_DIR/claude/announce-run.sh"  "$HOME/.claude/announce-run.sh"
 
 # --- dependency check -------------------------------------------------------
 info "Checking for tools the configs rely on"
