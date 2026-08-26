@@ -446,6 +446,52 @@ local edit_me = "build(one, two, three)"
 --    shows as a whole line deleted plus a whole line added. Applies to every
 --    diff nvim draws, these previews included.
 --
+--  REVIEWING A DIFF  (sindrets/diffview.nvim)
+--
+--  What gitsigns cannot answer, because the answer spans files: what changed
+--  across the working tree, a commit, or a branch. File panel left, two-pane
+--  diff right, in its own TAB.
+--
+--      <leader>gg   in and out on one key. Three states, the same shape as the
+--                   dap-ui panes and tmux's <prefix>C: looking at it -> close,
+--                   open in another tab -> go to it, neither -> open. The
+--                   middle case matters because diffview opens in a new tab --
+--                   without it a second press stacks a second review tab.
+--      <leader>gm   review the whole branch against the default branch. The
+--                   base is asked of the repo (origin/HEAD, else probing
+--                   origin/main and origin/master) rather than assumed, and the
+--                   range is `base...HEAD` -- THREE dots, so it diffs against
+--                   the merge base and commits that landed on main after you
+--                   branched are not counted as yours.
+--      <leader>gh   this file's history: every commit that touched it, with the
+--                   diff beside it rather than paged past. The good `git log -p`.
+--      <leader>gH   the whole repo's history, same view
+--      {visual}gh   the history of just the SELECTED LINES -- `git log -L`, the
+--                   "who last touched this function" query that is unusable on
+--                   the command line
+--
+--    Getting back out. Any of the four keys above closes the view when pressed
+--    from inside it -- whichever one opened it -- so there is nothing to
+--    remember about which are toggles. :DiffviewClose is the long way, and `gf`
+--    on a row is the other way: it leaves the review and opens the real file at
+--    that line. Diffview lives in its own tab, so gt/gT work too.
+--
+--    Inside the view (diffview's own, buffer-local):
+--      <tab> / <s-tab>   next / previous file
+--      -  or  s     stage / unstage the file under the cursor
+--      S  /  U      stage all / unstage all
+--      X            restore the file -- discard its changes
+--      gf           leave the review and open the real file at that line
+--      <leader>e    FOCUS THE FILE PANEL here, not neo-tree. Diffview's
+--                   buffer-local map wins, which is the more useful meaning
+--                   while reviewing.
+--      g?           the full keymap
+--
+--    It uses neovim's OWN diff engine, so diffopt+=linematch:60 applies here
+--    too, and enhanced_diff_hl is on: the changed REGION within a changed line
+--    is highlighted, not just the whole line. On someone else's edit that is the
+--    difference between "this line moved" and "this argument moved".
+--
 --  CORE  (no plugin)
 --    jk           (insert mode) escape to normal mode — the one you added
 --    <C-q>        BLOCKWISE visual. WezTerm takes <C-v> for paste, so it never

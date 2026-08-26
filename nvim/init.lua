@@ -84,6 +84,19 @@ require('lazy').setup({
   {
     'lewis6991/gitsigns.nvim',
   },
+  -- The other half of "show me the diff": what changed across a BRANCH, or a
+  -- commit, or the whole working tree -- the question gitsigns' gutter cannot
+  -- answer because the answer spans files. File panel on the left, two-pane
+  -- diff on the right.
+  --
+  -- In nvim rather than a TUI in another tmux window for one reason: reviewing
+  -- is not a read-only activity. Half of "what did that change" ends in staging
+  -- a hunk, jumping to a definition, or fixing it there and then -- and in here
+  -- <leader>gs, gd and the rest are all still under the hand.
+  {
+    'sindrets/diffview.nvim',
+    dependencies = { 'nvim-lua/plenary.nvim' },
+  },
   -- LSP: mason installs language servers, mason-lspconfig bridges to lspconfig
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
@@ -347,6 +360,95 @@ require('gitsigns').setup({
     map({ 'o', 'x' }, 'ih', gs.select_hunk, 'inner hunk')
   end,
 })
+
+-- Diffview. The question gitsigns' gutter cannot answer, because the answer
+-- spans files: what changed across the working tree, a commit, or a branch.
+--
+-- It uses NEOVIM'S OWN diff engine rather than shelling out to a formatter,
+-- which is why `diffopt+=linematch:60` (set with the editor options below)
+-- shows up here too -- a line with one word changed renders as a line with one
+-- word changed, instead of a delete plus an add.
+require('diffview').setup({
+  -- Highlight the changed REGION within a changed line, not just the line.
+  -- Off by default. On a review of someone else's edit it is the difference
+  -- between "this line moved" and "this argument moved".
+  enhanced_diff_hl = true,
+  view = {
+    -- Explicit rather than inherited: a merge wants three panes (ours, base,
+    -- theirs) and an ordinary review wants two.
+    default = { layout = 'diff2_horizontal' },
+    merge_tool = { layout = 'diff3_horizontal', disable_diagnostics = true },
+  },
+})
+
+-- The default branch, asked of the repo rather than assumed. `main` here and
+-- `master` on anything older, and neither is a safe guess -- origin/HEAD is the
+-- one place git actually records it.
+local function default_branch()
+  local ref = vim.fn.systemlist('git symbolic-ref --quiet --short refs/remotes/origin/HEAD')[1]
+  if vim.v.shell_error == 0 and ref and ref ~= '' then
+    return ref                                    -- e.g. `origin/main`
+  end
+  for _, guess in ipairs({ 'origin/main', 'origin/master', 'main', 'master' }) do
+    vim.fn.system({ 'git', 'rev-parse', '--verify', '--quiet', guess })
+    if vim.v.shell_error == 0 then return guess end
+  end
+  return nil
+end
+
+-- <leader>gg -- in and out on one key, three states, the same shape as the
+-- dap-ui panes and tmux's <prefix>C. Diffview opens in its own TAB, so without
+-- the middle case a second press would silently stack a second review tab on
+-- top of the first rather than returning you to it.
+local function diffview_toggle(args)
+  local lib = require('diffview.lib')
+  if lib.get_current_view() then
+    return vim.cmd('DiffviewClose')               -- looking at it -> shut it
+  end
+  local open = lib.views[1]
+  if open and vim.api.nvim_tabpage_is_valid(open.tabpage) then
+    return vim.api.nvim_set_current_tabpage(open.tabpage)   -- exists -> go to it
+  end
+  vim.cmd('DiffviewOpen ' .. (args or ''))        -- nothing -> make one
+end
+
+vim.keymap.set('n', '<leader>gg', function() diffview_toggle() end)
+
+-- One rule for every entry point below: pressed from INSIDE a view, they close
+-- it. Whichever key got you in, any of them gets you out -- rather than having
+-- to remember that gg toggles and the other three are one-way, or falling back
+-- to :DiffviewClose because the key you reached for did nothing.
+local function diffview_cmd(cmd)
+  return function()
+    if require('diffview.lib').get_current_view() then
+      return vim.cmd('DiffviewClose')
+    end
+    if type(cmd) == 'function' then return cmd() end
+    vim.cmd(cmd)
+  end
+end
+
+-- <leader>gm -- everything this branch did that the default branch didn't.
+-- `A...B` (three dots) is the crucial part: it diffs against the MERGE BASE, so
+-- commits that landed on main after you branched don't show up as your changes.
+-- Two dots would show those too and make a week-old branch unreadable.
+vim.keymap.set('n', '<leader>gm', diffview_cmd(function()
+  local base = default_branch()
+  if not base then
+    return vim.notify('no default branch found (origin/HEAD unset?)', vim.log.levels.WARN)
+  end
+  vim.cmd('DiffviewOpen ' .. base .. '...HEAD')
+end))
+
+-- History. `%` is this file's, bare is the whole repo's. This is the good
+-- version of `git log -p`: every commit that touched it, navigable, with the
+-- diff in the pane beside rather than paged past.
+vim.keymap.set('n', '<leader>gh', diffview_cmd('DiffviewFileHistory %'))
+vim.keymap.set('n', '<leader>gH', diffview_cmd('DiffviewFileHistory'))
+-- Visual: the history of just the SELECTED LINES -- `git log -L`, which is the
+-- query you actually want ("who last touched this function") and the one that
+-- is unusable on the command line.
+vim.keymap.set('v', '<leader>gh', "<Esc><Cmd>'<,'>DiffviewFileHistory<CR>")
 
 -- Autocompletion (nvim-cmp + LuaSnip)
 local cmp = require('cmp')
