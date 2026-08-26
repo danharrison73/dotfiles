@@ -59,6 +59,41 @@ config.keys = {
   -- COST: nvim no longer receives <C-v>. Press <C-q> for blockwise visual --
   -- vim aliases the two, so it is the same command, not a lesser one.
   { key = 'v', mods = 'CTRL', action = wezterm.action.PasteFrom 'Clipboard' },
+
+  -- Ctrl+Shift+O -- open a URL that is on screen, without the mouse. This is
+  -- the ctrl-click, as a keystroke: QuickSelect labels every match on screen
+  -- and the label key opens it, so a single URL is two keys and never a reach
+  -- for the trackpad.
+  --
+  -- The patterns are wider than "a hyperlink" on purpose. A dev server almost
+  -- never prints one: it prints `localhost:5173`, `127.0.0.1:8000`, or
+  -- `Running on 0.0.0.0:8080` -- no scheme, so WezTerm's own hyperlink rules
+  -- don't mark it and there is nothing to ctrl-click in the first place.
+  --
+  -- 0.0.0.0 is rewritten because it is a BIND address, not a destination: it
+  -- means "listen on every interface", and Windows cannot route to it. The
+  -- server is reachable on localhost, which WSL2 forwards across to Windows.
+  {
+    key = 'o',
+    mods = 'CTRL|SHIFT',
+    action = wezterm.action.QuickSelectArgs {
+      label = 'open url',
+      patterns = {
+        'https?://\\S+',
+        'localhost:\\d+\\S*',
+        '127\\.0\\.0\\.1:\\d+\\S*',
+        '0\\.0\\.0\\.0:\\d+\\S*',
+      },
+      action = wezterm.action_callback(function(window, pane)
+        local url = window:get_selection_text_for_pane(pane)
+        if url == nil or url == '' then return end
+        url = url:gsub('^0%.0%.0%.0:', 'localhost:')
+        if not url:match('^https?://') then url = 'http://' .. url end
+        wezterm.log_info('opening ' .. url)
+        wezterm.open_with(url)   -- Windows default browser; WezTerm runs there
+      end),
+    },
+  },
 }
 
 return config
