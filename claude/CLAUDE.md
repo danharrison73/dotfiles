@@ -94,6 +94,22 @@ much as in a display block, and it holds for *every* symbol in an equation — o
 underscore among glyphs is the same failure as all of them. Before sending, read
 each equation back index by index and check.
 
+**The subscript is never optional.** A symbol that carries an index in the maths
+keeps it in the prose: write `θ̂ₖ`, `nₖ`, `λₖ`, `σ̂ₖ²` — not a bare `θ̂`, `n`, `λ`,
+`σ̂²` with the index left to context. Dropping an index to dodge the glyph is the
+same error as writing it with an underscore. If I have to work out which k you
+mean, the notation has failed.
+
+> **DON'T FORGET.** This is the rule you break most often, and you break it late in
+> a reply, in a throwaway aside, after getting every displayed equation right. An
+> underscore-subscript in prose — `theta_k`, `sigma_i`, `w_r`, `n_k`, `p_ri` — is
+> ALWAYS wrong, however small the mention. **Before sending any reply containing
+> maths, scan the text for `_` and check every hit: it is either inside backticks as
+> a code identifier, or it is a bug you must fix.** There is no third case.
+
+Code identifiers are not maths: `Sig_h_win_1r`, `test_delta_prs`, `n_days_train`
+keep their underscores and stay in backticks. The rule governs symbols, not names.
+
 The fallback is only for indices with **no** glyph at all. There is no subscript
 b, c, d, f, g, q, v, w, y or z, and no superscript for most of the alphabet — so
 `n_races`, `x_{i+1}`, `σ²_max` have no full Unicode form. Two ways out, in order
