@@ -208,3 +208,192 @@ Details that matter:
 If a file already uses a different convention (`\(…\)`, MathJax config, a `.tex`
 preamble with custom macros), match the file — consistency within it beats this
 default.
+
+# How you write code
+
+Applies whenever you write or edit code, under whichever output style is
+active. § Brevity governs your replies; this governs the file on disk. Two
+subsections below, § Punctuation you wouldn't type and § Printing, are wider than
+that and bind your replies as well; each says so where it applies.
+
+## Docstrings
+
+**As terse as possible, and often absent.** A docstring earns its place by
+saying something the signature and the name do not. Most don't, and the ones
+that don't are worse than nothing — they push the actual code down the screen
+and go stale silently.
+
+- **No docstring on a three-line function.** If the body fits on a screen at a
+  glance, the name and the code are the documentation. Adding prose to
+  `def _flatten(rows): return [x for r in rows for x in r]` explains a thing
+  already fully visible.
+- **Sacrifice grammar for concision.** These are notes, not sentences. Drop
+  articles, drop the subject, drop the verb where the meaning survives. Fragments
+  are correct here. A docstring is read at a glance in a hover popup, and every
+  word that isn't load-bearing costs a glance.
+- **Never restate the signature.** "Takes a list of rows and returns a
+  dataframe" is what the annotations already say. Say what the caller cannot
+  see: units, the shape of the return, what makes it fail, why it exists.
+- One line if one line does it. Reach for a multi-line docstring only when
+  there is a genuine argument-by-argument contract that isn't obvious, and then
+  keep each line a fragment.
+
+Bad:  """Computes and then returns the Kelly-optimal stake for a given
+      win probability and set of decimal odds."""
+
+Good: """Kelly stake as a fraction of bank. p win prob, o decimal odds."""
+
+Bad:  """This is a helper function which is used to normalise the column
+      names of the input dataframe so that they are all lowercase."""
+
+Good: """Lowercase the column names. Mutates in place."""
+
+The second pair is the one to internalise: "Mutates in place" is three words and
+is the only thing in either version the caller couldn't have worked out.
+
+Maths inside a docstring follows § Math notation — docstrings take Unicode, and
+§ Define every symbol applies to them exactly as it applies to a reply. Concision
+never licenses an unglossed symbol; `p win prob` is the terse form of a gloss,
+not the absence of one.
+
+## What not to add
+
+**Hardcode by default.** A value used once is written where it's used. Don't
+hoist it to a module-level constant, don't make it a parameter, don't put it in
+a config dict. Extract on the *second* use, when you can see what actually
+varies. If a bare number is genuinely cryptic, name it as a local on the line
+above — `min_odds = 1.5` keeps the meaning and costs no jump to the top of the
+file.
+
+**No parameter I didn't ask for.** No flag, option or keyword argument with a
+single call site. A flag with one caller isn't flexibility; it's a branch that
+only ever goes one way, and the reader still has to walk both sides. Three
+booleans is eight behaviours, of which one exists. Same for a strategy dict, a
+registry, or a subclass with one implementation.
+
+Extracting later is a mechanical edit. Extracting early is a guess, and a wrong
+guess leaves an abstraction shaped around a use that never arrived.
+
+**Don't extract a helper used once.** A function whose body is shorter than its
+signature is a shallow module: it adds a name to learn without hiding any
+complexity. Inline it. Extract on the second or third use, when the abstraction
+is known rather than predicted.
+
+**Don't guard against states that can't occur.** No try/except around code that
+doesn't raise, no None-check on a value the caller just constructed, no
+validation of a private function's own arguments. A guard claims the bad state
+is reachable; if it isn't, it's a lie that costs the reader time working out
+when.
+
+**Crash early instead.** An assertion stating an invariant is worth more than a
+try/except that hides its violation. Catch an exception only where you can
+actually do something about it.
+
+**Solve the case I have, not the general case.** No format I don't use, no
+option I didn't ask for. YAGNI binds you harder than me: you can write the
+speculative version faster than I can read it.
+
+## Comments
+
+**Why, never what.** If a comment can be derived by reading the line below it,
+delete it. Worth keeping: why this approach over the obvious one, what invariant
+holds here, what breaks if this changes.
+
+**Don't comment bad code — rewrite it.** If a block needs a comment to be
+followable, first try renaming things so it doesn't.
+
+**Weight by subtlety, not uniformly.** The tricky function gets the comment; the
+obvious one gets nothing. Uniform coverage carries no signal — if everything is
+annotated, nothing is marked as mattering, and I can't find the part that does.
+
+**Never comment the change you're making.** No "changed to use X", no "added
+error handling here". The file says what the code is now; the diff and the
+commit message carry the history. Such comments are stale on the next edit.
+
+**No decoration.** A comment is words, not a divider. No `# ------- setup -------`,
+no `# =====================`, no boxed banner, no ASCII art, no `#####` rule
+between sections. If a file needs painted dividers to be navigable then it needs
+splitting into functions or modules, and the divider is hiding that. Blank lines
+separate blocks; that is what they are for.
+
+The general form of it: **if a person typing at a keyboard wouldn't produce it,
+it doesn't belong in the file.**
+
+## Punctuation you wouldn't type
+
+**Never an em dash.** Not in a comment, not in a docstring, not in a commit
+message, not in a PR title or body, and not in a reply to me in the terminal. It
+is the clearest single tell that a machine wrote the line, and there is always a
+better substitute: a comma, a colon, a full stop, or brackets. If a sentence seems
+to need one, it is usually two sentences.
+
+Same for the rest of the typographic set: no en dash between words, no curly
+quotes, no ellipsis character. Type ASCII. `'`, `"`, `...`.
+
+This governs what you write, not what you edit. My own prose, in this file and in
+my `.md` documents, uses em dashes and stays as it is: leave them where they are
+when you edit around them. § Math notation still takes precedence inside maths,
+where the Unicode glyphs are the point.
+
+## Printing
+
+**Whatever a script prints, I read it in a terminal or in nvim, and both are
+plain text.** Decoration that reads as structure in one is noise in the other.
+
+- **No banners, separators, emoji or colour.** `print("=" * 60)`,
+  `--- Results ---`, checkmarks, ANSI escapes. They cost a line each and carry no
+  data. Redirected to a file they are worse than noise: `^[[32m` is what I
+  actually see in nvim.
+- **One fact per line, `key: value`.** Greppable, diffable, no wrapping. Four
+  short prints beat one paragraph with `\n` in it.
+- **Never hand-align columns.** `f"{name:<30}{pnl:>12.4f}"` is unreadable in the
+  source and wrong the moment a name is 31 chars. Emit TSV and let `column -t` or
+  `:%!column -t` do the aligning.
+- **Past about twenty rows, write a file and print its path.** I have visidata
+  for that; the terminal scrollback is not a table viewer.
+- **Print the object, not a report about it.** `print(df.to_string())` beats a
+  loop that reformats every row by hand.
+- **Data on stdout, progress and errors on stderr**, so `script.py > out.txt`
+  leaves a file worth opening.
+- **No progress bars, spinners or `\r`.** Redirected, they become one
+  40,000-character line, which is the thing most likely to hang the editor.
+- **Headers once, outside the loop.** A section header reprinted per iteration is
+  the biggest volume multiplier there is.
+
+**The first three points hold for your replies too**, which I read in the same
+terminal. No banner lines, no rules between sections, no emoji, nothing drawn in a
+box. One fact per line instead of a padded paragraph. Columns in a Markdown table
+or not aligned at all, never faked with spaces.
+
+The 2D blocks in § Display math are the one exception: that layout carries the
+maths, it isn't decoration.
+
+Bad:
+
+```python
+print("=" * 60)
+print(f"RESULTS FOR {name.upper()}")
+print("=" * 60)
+for r in rows:
+    print(f"  {r.date:<12} {r.course:<20} {r.pnl:>10.2f}")
+```
+
+Good:
+
+```python
+print(f"results: {name}")
+for r in rows:
+    print(f"{r.date}\t{r.course}\t{r.pnl:.2f}")
+```
+
+## Deleting
+
+**Delete what you replace.** No old path left behind a flag, commented out, or
+kept as a fallback I didn't ask for. Git has it. Unused imports, superseded
+branches and dead helpers go in the same edit that obsoletes them.
+
+## Clarity
+
+**Write clearly, not cleverly.** Debugging is harder than writing, so code
+written at the limit of your cleverness cannot be debugged — by either of us.
+Where a clear version and a clever version both work, the clear one is correct.
