@@ -50,6 +50,7 @@ symlink "$DOTFILES_DIR/claude/CLAUDE.md"          "$HOME/.claude/CLAUDE.md"
 symlink "$DOTFILES_DIR/claude/keybindings.json"   "$HOME/.claude/keybindings.json"
 symlink "$DOTFILES_DIR/claude/statusline-command.sh" "$HOME/.claude/statusline-command.sh"
 symlink "$DOTFILES_DIR/claude/announce-run.sh"  "$HOME/.claude/announce-run.sh"
+symlink "$DOTFILES_DIR/visidata/.visidatarc"     "$HOME/.visidatarc"
 
 # --- dependency check -------------------------------------------------------
 info "Checking for tools the configs rely on"
@@ -62,6 +63,7 @@ have fzf    || missing+=(fzf)
 have rg     || missing+=(ripgrep)
 have jq     || missing+=(jq)
 { have fd || have fdfind; } || missing+=(fd)
+have uv     || missing+=(uv)
 
 if [ ${#missing[@]} -eq 0 ]; then
   echo "  all present"
@@ -85,6 +87,25 @@ if ! have zoxide; then
     echo "  install with: curl -sSfL https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | sh"
     echo "  (needs ~/.local/bin on your PATH)"
   fi
+fi
+
+# --- visidata ---------------------------------------------------------------
+# The terminal spreadsheet used to look at a dataframe pulled out of a stopped
+# debug session (dump it from <leader>dr, open it here). Installed rather than
+# advised, on the rust-analyzer reasoning below: idempotent, no sudo, and it
+# lands in ~/.local/bin which is already on PATH.
+#
+# `uv tool install` and not pip: it only ever READS a file, so it has no
+# business in a project venv, and installing it globally with pip would put
+# pandas-adjacent deps on the system interpreter for no reason. uv gives it a
+# private venv and links just the binary.
+if have uv; then
+  if ! have vd; then
+    info "Installing visidata (uv tool)"
+    uv tool install visidata || warn "visidata install failed"
+  fi
+else
+  warn "skipping visidata: needs uv (see the missing-tools list above)"
 fi
 
 # --- rust-analyzer ----------------------------------------------------------

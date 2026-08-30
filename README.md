@@ -121,6 +121,13 @@ Global [Claude Code](https://claude.com/claude-code) config:
 - `keybindings.json` — laptop-friendly scrolling. `settings.json` sets `"tui": "fullscreen"`, where the conversation is a scrollable view whose only default scroll keys are `pageup`/`pagedown` — which a laptop reaches through `Fn`. These add vim keys on Alt: `M-u`/`M-d` half page, `M-b`/`M-f` full page, `M-g`/`M-G` top/bottom (the file itself spells them `alt+u`, `alt+shift+g` and so on — Claude's own syntax, not tmux's `M-` shorthand). Alt was chosen because Claude's own bindings use `alt+p/o/t/w/v` and tmux's use `M-h/j/k/l`, `M-z`, `M-1`–`M-5`, `M-H/M-L` — no overlap — and because tmux forwards `M-u`/`M-d` into alternate-screen panes rather than swallowing them.
 - `statusline-command.sh` — custom status line showing model, effort, context %, cost, rate limits, and git state (needs `jq`).
 
+### visidata (`visidata/.visidatarc`)
+- **[VisiData](https://visidata.org)** — the terminal spreadsheet, and the answer to "where's VS Code's Data Viewer". Sort (`[`/`]`), filter (`|`/`\`), frequency tables (`Shift+F`), summary stats (`Shift+I`), on CSV/TSV/JSON/parquet/SQLite. `Ctrl+R` reloads the file, which is what makes it usable mid-debug.
+- **The workflow it exists for** — at a breakpoint, dump the frame from the DAP repl (`<leader>dr`) with `df.to_csv('/tmp/peek.csv', index=False)`, then `vd /tmp/peek.csv` in a tmux window. The debug session stays stopped throughout: the repl evaluates *in* the stopped frame, so `df` is already in scope, and writing a file doesn't resume anything. Step, re-dump, `Ctrl+R`. It's a snapshot rather than a live view — so is VS Code's.
+- `install.sh` installs it with `uv tool install` rather than pip: it only ever *reads* a file, so it has no business in a project venv, and uv gives it a private one and links just the binary into `~/.local/bin`.
+- **The one setting worth overriding** — `disp_float_fmt`. VisiData's default is `{:.2f}`, which renders a probability of `0.0034` as `0.00` and a coefficient of `-0.000181` as `-0.00`: not rounded, but indistinguishable from zero and from each other, with nothing on screen to say so. `{:.6g}` is six *significant figures* rather than decimal places, so precision follows magnitude — `0.0034` stays itself and `1400.0` shortens to `1400`.
+- Nothing else is set. VisiData detects WSL on its own and already points `clipboard_copy_cmd` at `clip.exe`.
+
 ## Tools I use
 - [tmux](https://github.com/tmux/tmux)
 - [wezterm](https://wezfurlong.org/wezterm/)

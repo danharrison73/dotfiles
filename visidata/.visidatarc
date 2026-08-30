@@ -1,0 +1,18 @@
+# VisiData config. Loaded from ~/.visidatarc.
+#
+# This is a python file, not a key-value list -- `options.<name> = <value>` is
+# ordinary attribute assignment, so anything python can compute is fair game.
+#
+# Deliberately short. VisiData already detects WSL on its own and points
+# clipboard_copy_cmd at clip.exe (and paste at powershell Get-Clipboard), so the
+# thing that would normally need setting here is already right.
+
+# The default is '{:.2f}', which is actively wrong for the numbers this box
+# deals with: it renders a probability of 0.0034 as `0.00` and a fitted
+# coefficient of -0.000181 as `-0.00`. Not rounded -- indistinguishable from
+# zero, and from each other, with nothing on screen to say so.
+#
+# '{:.6g}' is six SIGNIFICANT FIGURES rather than six decimal places, so the
+# precision follows the magnitude: 0.0034 stays 0.0034, 13.28 stays 13.28, and
+# 1400.0 shortens to 1400 instead of padding to 1400.00.
+options.disp_float_fmt = '{:.6g}'
