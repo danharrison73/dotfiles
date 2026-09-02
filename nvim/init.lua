@@ -1032,6 +1032,67 @@ vim.keymap.set('n', '<leader>dX', function()
   vim.notify(string.format('cleared %d watch(es)', n))
 end)
 
+-- <leader>dD -- the dataframe under the cursor, in visidata. Evaluates
+-- `.to_csv('/tmp/peek.csv', index=False)` in the stopped frame and opens `vd`
+-- on the result, which is the two-step repl workflow on one key.
+--
+-- Written by the debuggee rather than by nvim, because that is where the object
+-- lives, and read by a separate `vd` process because visidata is installed as a
+-- uv tool with its own venv and is not importable from the project interpreter.
+-- Even if it were, the debuggee's stdout is a dap terminal buffer and not a
+-- tty, so an in-process viewer would have nothing to draw on.
+--
+-- A tab, not a split: a spreadsheet wants the whole window, and closing it puts
+-- the debug layout back exactly as it was.
+vim.keymap.set({ 'n', 'v' }, '<leader>dD', function()
+  local session = dap.session()
+  if not session then
+    return vim.notify('no debug session to dump from', vim.log.levels.WARN)
+  end
+  local expr = current_expr()
+  if expr == '' then
+    return vim.notify('nothing under the cursor to dump', vim.log.levels.WARN)
+  end
+
+  local path = '/tmp/peek.csv'
+  session:evaluate(expr .. ".to_csv('" .. path .. "', index=False)", function(err)
+    if err then
+      return vim.notify(require('dap.utils').fmt_error(err), vim.log.levels.ERROR)
+    end
+
+    -- A vd already open on the file stays open. It holds your sorts, your
+    -- selections and your cursor, and Ctrl+R picks the new dump up in place; a
+    -- second tab would throw all of that away. So the step-and-re-dump loop is
+    -- <leader>dD, Ctrl+R, and you land on the reload keystroke.
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_valid(buf) and vim.b[buf].vd_peek then
+        local win = vim.fn.win_findbuf(buf)[1]
+        if win then
+          vim.api.nvim_set_current_win(win)   -- switches tabpage too, if it is in another
+          vim.cmd('startinsert')
+          return vim.notify(expr .. ' -> ' .. path .. ', Ctrl+R to reload')
+        end
+        vim.api.nvim_buf_delete(buf, { force = true })   -- hidden, and its job is gone
+      end
+    end
+
+    vim.cmd('tabnew')
+    local buf = vim.api.nvim_get_current_buf()
+    vim.fn.jobstart({ 'vd', path }, {
+      term = true,
+      -- Quitting vd takes the tab with it, rather than leaving a dead terminal
+      -- buffer showing [Process exited 0] to close by hand.
+      on_exit = function()
+        if vim.api.nvim_buf_is_valid(buf) then
+          vim.api.nvim_buf_delete(buf, { force = true })
+        end
+      end,
+    })
+    vim.b.vd_peek = true   -- tagged so the next dump finds this window
+    vim.cmd('startinsert')
+  end)
+end)
+
 -- <Esc> in any debugger pane -- back to the code, one key, no <C-w> anything.
 -- The code window is found rather than remembered (`wincmd p` is wrong as soon
 -- as you have hopped between two panes): it is the window showing a real file,
