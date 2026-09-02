@@ -921,6 +921,24 @@ vim.keymap.set('n', '<leader>dW', function() focus_element('watches', true) end)
 vim.keymap.set('n', '<leader>ds', function() focus_element('scopes') end)          -- locals/globals, in and out
 vim.keymap.set('n', '<leader>dS', function() focus_element('stacks') end)          -- the call stack, in and out
 
+-- <leader>dd -- into the sidebar and back out WITHOUT naming an element: the
+-- pane you were last in, which is the one you want nine times in ten. The three
+-- keys above are for going straight to a named pane; this is for when you just
+-- want in, and it is the same key back out.
+--
+-- Together with <Tab> below it means the sidebar is reachable and traversable
+-- without <C-w> anything, which matters because <C-h/j/k/l> cannot be the
+-- window keys here: three of the four are stepping commands.
+local last_element = 'scopes'
+vim.api.nvim_create_autocmd('WinEnter', {
+  callback = function()
+    local id = vim.bo.filetype:match('^dapui_(.*)')
+    if id then last_element = id end
+  end,
+  desc = 'remember which dap pane you were last in',
+})
+vim.keymap.set('n', '<leader>dd', function() focus_element(last_element) end)
+
 -- Debug the test the cursor is inside, no configuration and no picker. pytest
 -- and unittest both; dap-python reads the enclosing def/class from treesitter.
 vim.keymap.set('n', '<leader>dm', function() require('dap-python').test_method() end)
@@ -1111,12 +1129,41 @@ local function focus_source()
   end
   vim.cmd('wincmd p')   -- nothing qualified; the old behaviour is still better than nothing
 end
+
+-- Moving BETWEEN the panes once you are in one. Sorted by position on screen
+-- rather than by creation order, so <Tab> walks the sidebar top to bottom the
+-- way it looks, and the repl at the bottom is the last stop before it wraps.
+local function cycle_panes(step)
+  local wins = {}
+  for _, w in ipairs(vim.api.nvim_list_wins()) do
+    local ft = vim.bo[vim.api.nvim_win_get_buf(w)].filetype
+    if ft:match('^dapui_') or ft == 'dap-repl' then table.insert(wins, w) end
+  end
+  if #wins < 2 then return end
+  table.sort(wins, function(a, b)
+    local pa, pb = vim.api.nvim_win_get_position(a), vim.api.nvim_win_get_position(b)
+    if pa[1] ~= pb[1] then return pa[1] < pb[1] end
+    return pa[2] < pb[2]
+  end)
+  local cur = vim.api.nvim_get_current_win()
+  for i, w in ipairs(wins) do
+    if w == cur then
+      return vim.api.nvim_set_current_win(wins[(i - 1 + step) % #wins + 1])
+    end
+  end
+end
+
 vim.api.nvim_create_autocmd('FileType', {
   pattern = { 'dapui_scopes', 'dapui_stacks', 'dapui_watches', 'dapui_breakpoints', 'dap-repl' },
   callback = function(ev)
     -- Normal mode only. The watches pane is a prompt buffer, where <Esc> in
     -- INSERT has to keep meaning "stop typing this expression".
     vim.keymap.set('n', '<Esc>', focus_source, { buffer = ev.buf, desc = 'back to the code' })
+    -- <Tab> to the next pane, <S-Tab> to the previous, wrapping. Buffer-local,
+    -- so <Tab> keeps its global meaning everywhere else, and normal mode only,
+    -- so completion in the repl and the watches prompt is untouched.
+    vim.keymap.set('n', '<Tab>', function() cycle_panes(1) end, { buffer = ev.buf, desc = 'next dap pane' })
+    vim.keymap.set('n', '<S-Tab>', function() cycle_panes(-1) end, { buffer = ev.buf, desc = 'previous dap pane' })
   end,
 })
 
