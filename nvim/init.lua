@@ -1437,13 +1437,66 @@ vim.api.nvim_create_autocmd('FileType', {
 -- reloading, because the callback runs under textlock. Deferring it to the next
 -- event-loop tick is what makes it actually run.
 -- The mode() guard keeps it off the command line, where :checktime is an error.
-vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermLeave' }, {
+vim.api.nvim_create_autocmd({ 'FocusGained', 'BufEnter', 'CursorHold', 'TermLeave', 'InsertLeave' }, {
   callback = function()
-    if vim.fn.mode() ~= 'c' and vim.bo.buftype == '' then
+    if vim.fn.mode() ~= 'c' then
       vim.schedule(function() vim.cmd('checktime') end)
     end
   end,
   desc = 'reload buffers changed on disk',
+})
+
+-- The autocmds above all need something to HAPPEN: a focus change, a buffer
+-- switch, the cursor going idle after a move. They all miss the case this setup
+-- is actually built around, which is nvim sitting in one tmux pane, visible and
+-- focused, while claude edits the file in the pane next door. No focus change,
+-- no keystroke, so nothing ever asks, and the buffer stays stale until you
+-- happen to touch it.
+--
+-- libuv watches the file itself, so the reload happens the moment it changes
+-- and costs no interaction at all. One fd per file buffer.
+--
+-- The watch is restarted after every event: a writer that saves by writing a
+-- temp file and renaming it over the original leaves the watch pointing at an
+-- inode nothing will ever touch again, so a single-shot watch reloads once and
+-- then goes quiet. inotify under WSL also only covers the Linux filesystem, so
+-- a file under /mnt/c never fires and the autocmds above remain its fallback.
+local watchers = {}
+
+local function unwatch(buf)
+  local w = watchers[buf]
+  if w then
+    w:stop()
+    watchers[buf] = nil
+  end
+end
+
+local function watch(buf)
+  unwatch(buf)
+  if not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= '' then return end
+  local path = vim.api.nvim_buf_get_name(buf)
+  if path == '' or vim.fn.filereadable(path) == 0 then return end
+
+  local w = vim.uv.new_fs_event()
+  if not w then return end
+  watchers[buf] = w
+  w:start(path, {}, function()
+    -- Callback lands on the libuv thread, where the nvim API is off limits.
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(buf) then return unwatch(buf) end
+      vim.cmd('checktime')
+      watch(buf)
+    end)
+  end)
+end
+
+vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufWritePost' }, {
+  callback = function(ev) watch(ev.buf) end,
+  desc = 'watch the file on disk for outside edits',
+})
+vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+  callback = function(ev) unwatch(ev.buf) end,
+  desc = 'drop the file watcher with the buffer',
 })
 
 -- Say when it happens. A buffer silently changing under the cursor is worse
