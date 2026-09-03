@@ -138,3 +138,35 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 export BROWSER="$HOME/.local/bin/chrome-wsl"
+
+# --- listening servers -------------------------------------------------------
+# `ports` -- what is listening, and which process to kill to stop it.
+#
+# The question this answers is "I left a dev server running somewhere, where".
+# `ss -tlnp` already knows, but it prints two lines per socket and buries the
+# pid inside users:(("python3",pid=27265,fd=6)), which is not something to read
+# at a glance or pipe anywhere.
+#
+# PID and command show only for processes you OWN -- ss needs root for anyone
+# else's, and prints a bare dash instead. That is the right filter here anyway:
+# the rows with a dash are system services (resolved, mysql, ollama), and the
+# rows with a pid are the ones you started and might want to stop.
+#
+# TSV out of awk and aligned by column, rather than printf padding that breaks
+# on the first long path.
+ports() {
+    ss -tlnpH 2>/dev/null | awk '
+    {
+        split($4, a, ":"); port = a[length(a)]
+        pid = "-"
+        if (match($0, /pid=[0-9]+/)) pid = substr($0, RSTART + 4, RLENGTH - 4)
+        cmd = "-"
+        if (pid != "-") {
+            c = "ps -o args= -p " pid " 2>/dev/null"
+            c | getline cmd
+            close(c)
+            if (cmd == "") cmd = "-"
+        }
+        printf "%s\t%s\t%s\n", port, pid, cmd
+    }' | sort -n -u | sed '1i PORT\tPID\tCOMMAND' | column -t -s$'\t'
+}
