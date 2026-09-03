@@ -289,6 +289,18 @@ local edit_me = "build(one, two, three)"
 --                   output outlives the session. Also as :DebugCleanup, and it
 --                   reports how many splits it closed rather than failing quiet.
 --
+--    When it breaks:
+--      <leader>dE   cycle what stops the program: uncaught -> raised+uncaught
+--                   -> none. `uncaught` is on by default (dap.defaults.python),
+--                   so a traceback HALTS on the throwing line with the frame
+--                   still live instead of ending the session and leaving you to
+--                   read a traceback with no locals behind it. `raised` stops on
+--                   every exception including ones libraries throw and swallow
+--                   -- turn it on to find one something upstream is catching.
+--      <leader>re   NOT under the debugger: turn the last traceback in the run
+--                   split into a quickfix list and jump to the innermost frame.
+--                   :cnext walks outwards to the caller.
+--
 --    Inspecting:
 --      K            hover docs normally; the VALUE under the cursor while the
 --                   session is stopped. At a breakpoint that is the question

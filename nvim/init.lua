@@ -1318,6 +1318,36 @@ vim.keymap.set('n', '<leader>df', dap.focus_frame)
 -- you to one; this is the version you can navigate.
 vim.keymap.set('n', '<leader>dL', function() dap.list_breakpoints(true) end)
 
+-- Stop on the line that threw -- what VS Code does when a run blows up.
+--
+-- debugpy can break on an exception, but nvim-dap asks for 'default' filters
+-- unless told otherwise, and debugpy's default is to break on NOTHING. So a
+-- traceback ends the session and you are left reading it after the frame is
+-- gone, which is the one moment the locals were worth having.
+--
+-- `uncaught` and not `raised`: raised stops on EVERY exception, including the
+-- ones a library throws and swallows on purpose -- a StopIteration per loop, a
+-- KeyError inside a dict.get. Unusable in anything with pandas underneath.
+-- <leader>dE adds raised for the session when you actually want it.
+--
+-- Set on defaults rather than per-run: session.lua applies these at
+-- initialisation, so it covers every route in -- <F5>, <leader>dm, <leader>dM.
+dap.defaults.python.exception_breakpoints = { 'uncaught' }
+
+-- <leader>dE -- cycle what stops the program, mid-session. `raised` is how you
+-- find the exception that something upstream is catching and hiding.
+local exc_modes = { { 'uncaught' }, { 'raised', 'uncaught' }, {} }
+local exc_names = { 'uncaught', 'raised + uncaught', 'none' }
+local exc_i = 1
+vim.keymap.set('n', '<leader>dE', function()
+  if not dap.session() then
+    return vim.notify('no session -- exception filters are set at launch', vim.log.levels.WARN)
+  end
+  exc_i = exc_i % #exc_modes + 1
+  dap.set_exception_breakpoints(exc_modes[exc_i])
+  vim.notify('break on: ' .. exc_names[exc_i])
+end)
+
 -- <leader>dM -- run a Makefile target under the debugger in one keypress.
 -- The convention it relies on is `DEBUG=1`: a target that, given it, runs behind
 -- `python -m debugpy --listen $(PORT) --wait-for-client`. signal-engine's
@@ -1469,6 +1499,68 @@ vim.keymap.set('n', '<leader>rr', function()
   local cmd = vim.fn.shellescape(py) .. ' ' .. vim.fn.shellescape(file) .. ' ' .. args
   run_in_terminal(cmd)
 end)   -- run the current python file, no Makefile
+
+-- <leader>re -- the last traceback in the run split, as a quickfix list, cursor
+-- on the line that actually threw.
+--
+-- The other half of what VS Code does with a crash: <leader>dE covers a run
+-- under the debugger, but <leader>rr and <leader>mm are the everyday case and
+-- their traceback is dead text in a terminal buffer. gf cannot follow it --
+-- python's `File "x.py", line 42` is not a format vim knows.
+--
+-- Parsed with a lua pattern rather than 'errorformat'. An efm capable of
+-- python's multi-line traceback is a write-only expression of backslashes, and
+-- this needs to do one more thing than efm can anyway: prefer the LAST
+-- traceback in the buffer (the most recent run) over the first.
+local function traceback_to_quickfix()
+  local buf
+  for _, b in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(b) and vim.bo[b].buftype == 'terminal' then
+      buf = b   -- last one wins: the run split is reused, so it is the newest
+    end
+  end
+  if not buf then return vim.notify('no terminal buffer', vim.log.levels.WARN) end
+
+  local raw = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local start
+  for i = #raw, 1, -1 do
+    if raw[i]:match('^Traceback %(most recent call last%)') then start = i break end
+  end
+  if not start then return vim.notify('no traceback in the run output', vim.log.levels.WARN) end
+
+  -- Joined with no separator before parsing, because a terminal HARD-WRAPS at
+  -- the pane width: one traceback line becomes two buffer lines with the break
+  -- anywhere, including the middle of a path. Read line by line, any path
+  -- longer than the split is wide simply never matches -- and the run split is
+  -- nine rows of an 80-column pane, so that is most real paths here.
+  -- Joining means the pattern need not know where the wrap fell: `", line `
+  -- cannot occur inside a filename, so the lazy capture still stops correctly.
+  local blob = table.concat(vim.list_slice(raw, start + 1), '')
+  local items = {}
+  for file, lnum, fn in blob:gmatch('File "(.-)", line (%d+), in ([%w_<>.]+)') do
+    table.insert(items, { filename = file, lnum = tonumber(lnum), text = 'in ' .. fn })
+  end
+  if #items == 0 then return vim.notify('traceback had no frames', vim.log.levels.WARN) end
+
+  -- The exception line is the last unindented line naming a type. Scanned over
+  -- the raw lines, not the blob: joining destroys the line starts that identify
+  -- it, and a wrapped message still carries its type in the first segment,
+  -- which is the half worth having.
+  local message
+  for i = #raw, start, -1 do
+    if raw[i]:match('^%a[%w.]*:%s') or raw[i]:match('^%a[%w.]*Error') then message = raw[i] break end
+  end
+
+  -- The exception belongs to the innermost frame, which is where you want to
+  -- land, so it replaces that frame's text rather than becoming a frameless
+  -- entry the quickfix list cannot jump to.
+  if message then items[#items].text = message end
+  vim.fn.setqflist({}, ' ', { title = message or 'traceback', items = items })
+  vim.cmd('copen | cbottom')
+  vim.cmd('cc ' .. #items)   -- innermost frame: the line that actually threw
+  vim.notify(message or 'traceback')
+end
+vim.keymap.set('n', '<leader>re', traceback_to_quickfix)
 
 -- <leader>dq -- put the editor back how it was. dap-ui's panes already close
 -- themselves when a session ends (the listeners above fire on event_terminated
