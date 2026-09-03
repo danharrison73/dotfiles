@@ -223,20 +223,35 @@ saying something the signature and the name do not. Most don't, and the ones
 that don't are worse than nothing — they push the actual code down the screen
 and go stale silently.
 
+- **One line by default.** Verb first, saying what it does and not how it does
+  it: "Lowercase the column names", never "Loops over the columns and applies
+  `str.lower`". A noun fragment naming the return is equally good where the
+  function exists to produce one: "Kelly stake as a fraction of bank". Anything
+  past one line has to earn the extra lines.
 - **No docstring on a three-line function.** If the body fits on a screen at a
   glance, the name and the code are the documentation. Adding prose to
   `def _flatten(rows): return [x for r in rows for x in r]` explains a thing
   already fully visible.
 - **Sacrifice grammar for concision.** These are notes, not sentences. Drop
-  articles, drop the subject, drop the verb where the meaning survives. Fragments
-  are correct here. A docstring is read at a glance in a hover popup, and every
-  word that isn't load-bearing costs a glance.
-- **Never restate the signature.** "Takes a list of rows and returns a
-  dataframe" is what the annotations already say. Say what the caller cannot
-  see: units, the shape of the return, what makes it fail, why it exists.
-- One line if one line does it. Reach for a multi-line docstring only when
-  there is a genuine argument-by-argument contract that isn't obvious, and then
-  keep each line a fragment.
+  articles, drop the subject, drop the verb where a noun names the return.
+  Fragments are correct here. A docstring is read at a glance in a hover popup,
+  and every word that isn't load-bearing costs a glance.
+- **Never restate the signature, and never restate the type hints in prose.**
+  "Takes a list of rows and returns a dataframe" is what the annotations already
+  say, in a form that cannot go stale. Say what the caller cannot see: units,
+  the shape of the return, what makes it fail, why it exists.
+- **Args/Returns/Raises only where the signature doesn't already give them.** A
+  named argument with a type hint documents itself. A section earns its place
+  when there is something the signature cannot carry: units, the index set, a
+  non-obvious side effect, an exception the caller is expected to handle, a
+  gotcha. Then document only those arguments, not the rest for symmetry.
+- **No Example section unless the usage is genuinely non-obvious.** When one is
+  warranted write it as a doctest, `>>> kelly(0.4, 3.0)`, which is executable,
+  checkable with `pytest --doctest-modules`, and renders everywhere.
+- **No Markdown.** No `**bold**`, no headers, no bullet lists, no fenced code
+  blocks. Nothing renders it: `help()` prints the string verbatim and I read the
+  raw source in nvim. Single backticks round an identifier are fine, they read
+  as plain text either way.
 
 Bad:  """Computes and then returns the Kelly-optimal stake for a given
       win probability and set of decimal odds."""
