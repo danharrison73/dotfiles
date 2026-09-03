@@ -368,6 +368,25 @@ local edit_me = "build(one, two, three)"
 --    argv), `file:libs` (same, but steps into library code), `module`
 --    (python -m …), `attach`, `file:doctest`.
 --
+--  COPILOT  (zbirenbaum/copilot.lua) -- ghost text, never a cmp source
+--      <M-y>        accept the suggestion
+--      <M-w>        accept just the next WORD -- the rest is usually wrong
+--      <M-]> <M-[>  cycle alternatives
+--      <C-]>        dismiss
+--      <leader>ct   suggestions off for this buffer, and on again
+--
+--    <Tab> is untouched and still cmp/LuaSnip. Copilot's own default accept is
+--    <M-l>, which cannot work here: tmux takes M-l for select-pane with
+--    `bind -n`, so nvim never sees it. Same for <M-Right>/<M-Down>.
+--
+--    Ghost text hides itself while the cmp menu is open, so the two never draw
+--    over each other. It is Comment + italic: a suggestion should not look like
+--    code you already wrote.
+--
+--    Excluded by FILETYPE only: gitcommit, gitrebase, dotenv, dap-repl. It runs
+--    in every repo. :CopilotWhy names the rule when it is not live in a buffer;
+--    :Copilot status only tells you that it is not.
+--
 --  WORKTREES
 --    <leader>fw   pick a git worktree, cd into it, and land in find_files
 --                 there. <Esc> out of the finder if the cd was the point.

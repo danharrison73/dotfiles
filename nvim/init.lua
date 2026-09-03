@@ -97,6 +97,16 @@ require('lazy').setup({
     'sindrets/diffview.nvim',
     dependencies = { 'nvim-lua/plenary.nvim' },
   },
+  -- Copilot, as GHOST TEXT only -- never as a cmp source.
+  --
+  -- Mixing the two makes both worse: AI entries push real LSP completions out
+  -- of the list, cmp's fuzzy matching fights multi-line suggestions, and you
+  -- lose the ability to tell a guess from a fact. The LSP knows the method
+  -- exists; copilot thinks it probably does. Different keys, different colour.
+  {
+    'zbirenbaum/copilot.lua',
+    event = 'InsertEnter',
+  },
   -- LSP: mason installs language servers, mason-lspconfig bridges to lspconfig
   { 'williamboman/mason.nvim' },
   { 'williamboman/mason-lspconfig.nvim' },
@@ -481,6 +491,118 @@ cmp.setup({
     { name = 'path' },
   }),
 })
+
+-- Copilot. Ghost text beside the cursor, and deliberately NOT a cmp source.
+--
+-- The panel is off: it is a separate split of ten alternative completions,
+-- which is a different activity from typing, and <leader>ff already exists for
+-- when you want to go looking for something.
+--
+-- hide_during_completion is the plugin's own default and is left on -- it
+-- suppresses the ghost text while the cmp menu is open, so the two never draw
+-- over each other. That is the whole of the interference problem, handled
+-- upstream; nothing here needs to hook cmp's events.
+-- copilot.lua wants node >= 22 and errors out on anything older. nvm keeps
+-- several versions side by side and only puts ONE of them on PATH, so the
+-- usable binary is frequently installed and simply not active -- and switching
+-- the nvm default to satisfy an editor plugin would change the node every
+-- other tool on this box runs, which is the wrong trade.
+--
+-- So: use PATH's node when it is new enough, otherwise find the newest nvm
+-- version that is, and point only copilot at it. Nothing else moves. Resolved
+-- rather than hardcoded so the path survives a node upgrade and a different
+-- machine.
+local function node_for_copilot()
+  local function major(v) return tonumber((v or ''):match('^v?(%d+)')) or 0 end
+
+  local on_path = vim.fn.system({ 'node', '--version' }):gsub('%s+$', '')
+  if vim.v.shell_error == 0 and major(on_path) >= 22 then
+    return nil                      -- nil means "just use `node`"
+  end
+
+  -- Bound to a local first: `a or b .. c` parses as `a or (b .. c)` in lua,
+  -- because .. binds tighter than or -- so inlining this drops the suffix
+  -- whenever NVM_DIR is set, and the glob silently matches nothing.
+  local nvm = vim.env.NVM_DIR or (vim.env.HOME .. '/.nvm')
+  local best, best_ver = nil, 0
+  for _, dir in ipairs(vim.fn.glob(nvm .. '/versions/node/v*', true, true)) do
+    local v = major(vim.fs.basename(dir))
+    local bin = dir .. '/bin/node'
+    if v >= 22 and v > best_ver and vim.uv.fs_stat(bin) then
+      best, best_ver = bin, v
+    end
+  end
+  return best                       -- nil if none: copilot says so itself
+end
+
+-- :CopilotWhy -- why copilot is or is not live in this buffer. `:Copilot status`
+-- says only "not attached based on should_attach config", which is the one
+-- thing you already knew; this names the rule.
+vim.api.nvim_create_user_command('CopilotWhy', function()
+  local buf = vim.api.nvim_get_current_buf()
+  local ft = vim.bo[buf].filetype
+  local off = require('copilot.config').filetypes[ft] == false
+  local why =
+      not vim.bo[buf].buflisted and 'buffer is not buflisted'
+      or vim.bo[buf].buftype ~= '' and ("buftype is '" .. vim.bo[buf].buftype .. "', not a file")
+      or off and ("filetype '" .. ft .. "' is excluded")
+      or nil
+  vim.notify(('copilot %s: %s'):format(why and 'OFF' or 'ON', why or 'attached'),
+    why and vim.log.levels.WARN or vim.log.levels.INFO)
+end, { desc = 'why copilot is or is not attached to this buffer' })
+
+require('copilot').setup({
+  copilot_node_command = node_for_copilot(),
+  panel = { enabled = false },
+  suggestion = {
+    enabled = true,
+    auto_trigger = true,
+    -- Keys chosen around two things already using the obvious ones.
+    --
+    -- Copilot's default accept is <M-l>, which CANNOT work here: tmux binds
+    -- M-l to select-pane -R with `bind -n`, so tmux consumes it and nvim never
+    -- sees the key at all. Same for <M-Right>/<M-Down> (the usual accept_word
+    -- and accept_line), which tmux takes for pane movement.
+    --
+    -- <Tab> is cmp's, and stays cmp's. <C-y> is cmp's confirm via
+    -- preset.insert. So accept is <M-y> -- free in both tmux and nvim, and
+    -- `y` for yes reads the same as <C-y> did.
+    keymap = {
+      accept      = '<M-y>',
+      accept_word = '<M-w>',   -- take just the next word; the rest is usually wrong
+      accept_line = false,
+      next        = '<M-]>',
+      prev        = '<M-[>',
+      dismiss     = '<C-]>',
+    },
+  },
+
+  -- Filetypes where a suggestion is either useless or actively unwanted. The
+  -- dotenv/secret ones matter for the same reason as the repo list above:
+  -- everything in the buffer is context, and a .env is nothing but secrets.
+  filetypes = {
+    ['*'] = true,
+    gitcommit = false,     -- write your own commit messages
+    gitrebase = false,
+    hgcommit = false,
+    dotenv = false,
+    ['dap-repl'] = false,  -- a live frame, not a file
+  },
+})
+
+-- Ghost text should not look like code you wrote. `Comment` is the plugin's
+-- default and is already dim, but tokyonight's comment colour is close enough
+-- to the foreground at this contrast that a suggestion reads as real. Italic
+-- separates them at a glance without another colour to learn.
+vim.api.nvim_set_hl(0, 'CopilotSuggestion', { link = 'Comment', italic = true, default = false })
+
+-- <leader>ct -- suggestions off for this buffer and on again. For reading
+-- rather than writing, where a suggestion appearing under the cursor every
+-- time you pause is pure noise.
+vim.keymap.set('n', '<leader>ct', function()
+  require('copilot.suggestion').toggle_auto_trigger()
+  vim.notify('copilot: ' .. (vim.b.copilot_suggestion_auto_trigger and 'on' or 'off') .. ' (this buffer)')
+end)
 
 -- LSP (mason + mason-lspconfig + nvim-lspconfig)
 require('mason').setup()
