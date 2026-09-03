@@ -961,7 +961,25 @@ end)
 vim.keymap.set('n', '<leader>dx', dap.clear_breakpoints)
 vim.keymap.set('n', '<leader>dc', dap.continue)
 vim.keymap.set('n', '<leader>dC', dap.run_to_cursor) -- one-shot breakpoint here, then resume
-vim.keymap.set('n', '<leader>dR', dap.run_last)      -- rerun the last configuration, skipping the picker
+-- <leader>dR -- rerun the last configuration, skipping the picker.
+--
+-- nvim-dap keeps that configuration in a module-local (`local last_run`), set
+-- inside dap.run(). So it does NOT survive restarting nvim: after a restart the
+-- key prints "No configuration available to re-run" at info level, which is
+-- quiet enough to read as the key being broken.
+--
+-- Tracked here by listening for event_initialized -- the flag says whether THIS
+-- nvim has ever launched or attached, which is exactly the condition for
+-- last_run being set -- and falling back to the picker, so the key always does
+-- the thing you wanted rather than nothing.
+local dap_has_run = false
+dap.listeners.after.event_initialized.track_run_last = function() dap_has_run = true end
+
+vim.keymap.set('n', '<leader>dR', function()
+  if dap_has_run then return dap.run_last() end
+  vim.notify('nothing to re-run yet -- picking a configuration')
+  dap.continue()
+end)
 
 -- Stepping on hjkl, with the call stack drawn vertically: callees are BELOW,
 -- callers ABOVE, and execution runs left to right along the current line.
