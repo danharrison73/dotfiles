@@ -523,6 +523,19 @@ local edit_me = "build(one, two, three)"
 --    is highlighted, not just the whole line. On someone else's edit that is the
 --    difference between "this line moved" and "this argument moved".
 --
+--  WINDOWS  (nvim's own splits)
+--    M-h/j/k/l    move between nvim windows -- BUT only while tmux is in nvim
+--                 mode. M-o (in tmux) flips which layer these steer: tmux
+--                 panes by default, nvim's splits when flipped, with
+--                 [NVIM WINDOWS] shown in the tmux bar while it is.
+--                 Set in terminal mode too, so it works in the <leader>mm run
+--                 split and the dap repl.
+--    <C-w>hjkl    always nvim windows, untouched. These exist because
+--                 <C-h/j/k/l> cannot be the window keys here -- three of the
+--                 four are dap stepping commands.
+--    M-Left/Down/Up/Right   always tmux panes, whatever the mode -- the escape
+--                 hatch if you toggle and forget.
+--
 --  CORE  (no plugin)
 --    jk           (insert mode) escape to normal mode — the one you added
 --    <C-q>        BLOCKWISE visual. WezTerm takes <C-v> for paste, so it never

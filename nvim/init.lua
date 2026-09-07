@@ -1748,4 +1748,21 @@ vim.api.nvim_create_autocmd('FileChangedShellPost', {
 vim.keymap.set({ 'n', 'x' }, '<M-u>', '<C-u>', { desc = 'half page up' })
 vim.keymap.set({ 'n', 'x' }, '<M-d>', '<C-d>', { desc = 'half page down' })
 
+-- M-h/j/k/l -- between nvim's own windows, the same motion tmux uses between
+-- panes. Which of the two you get is tmux's decision: M-Space flips @panemode,
+-- and while it is set tmux forwards these keys here instead of consuming them
+-- (see tmux/.tmux.conf). So one set of keys steers whichever layer you are
+-- thinking about, and the tmux bar says which.
+--
+-- <C-w>hjkl still works and is untouched. These exist because <C-h/j/k/l>
+-- cannot be the window keys here -- three of the four are dap stepping.
+--
+-- Set for terminal mode too: the <leader>mm run split and the dap repl are
+-- terminal buffers, and a window key that stops working in one of them is
+-- worse than not having it.
+for _, k in ipairs({ 'h', 'j', 'k', 'l' }) do
+  vim.keymap.set('n', '<M-' .. k .. '>', '<C-w>' .. k, { desc = 'window ' .. k })
+  vim.keymap.set('t', '<M-' .. k .. '>', '<C-\\><C-n><C-w>' .. k, { desc = 'window ' .. k })
+end
+
 vim.keymap.set('i', 'jk', '<Esc>')  -- jk to escape insert mode
